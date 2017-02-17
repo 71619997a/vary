@@ -63,3 +63,42 @@ class Image(object):
                         rgb = tuple(vals[i : i+3])
                         img.setPixel(s3 % width, s3 / width, rgb)
                 return img
+
+        
+def getcolumn(arr2d, idx):
+        col = []
+        for row in arr2d:
+                col.append(row[idx])
+        return col
+        
+def transpose(m):
+        return [getcolumn(m, i) for i in range(len(m[0]))]
+
+def mtxMult(m1, m2):
+        m2t = transpose(m2)
+        mret = []
+        for row in m1:
+                mret.append([])
+                for i in range(len(m2t)):
+                        col = m2t[i]
+                        dot = 0
+                        for j in range(len(row)):
+                                dot += col[j] * row[j]
+                        mret[-1].append(dot)
+        return mret
+
+
+def scalarMult(k, m):
+        return [[k * i for i in j] for j in m]
+
+def idMtx(n):
+        return [[0 if i != j else 1 for i in range(n)] for j in range(n)]
+
+def mtxStr(m):
+        ret = '[\n'
+        for row in m:
+                ret += '\t'
+                for n in row:
+                        ret += str(n) + '\t'
+                ret += '\n'
+        return ret + ']'
