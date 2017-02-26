@@ -2,6 +2,7 @@ from random import randint, random
 import math
 import os
 import re
+import matrix
 
 WIDTH = 500
 HEIGHT = 500
@@ -32,7 +33,10 @@ class Image(object):
                 os.system('rm temp.ppm')
 
         def setPixel(self, x, y, col):
-                self.pixels[y][x] = col
+                try:
+                        self.pixels[y][x] = col
+                except: 
+                        return
 
         def setPixels(self, ls):  # list of (x, y, color)
                 for x, y, col in ls:
@@ -65,40 +69,3 @@ class Image(object):
                 return img
 
         
-def getcolumn(arr2d, idx):
-        col = []
-        for row in arr2d:
-                col.append(row[idx])
-        return col
-        
-def transpose(m):
-        return [getcolumn(m, i) for i in range(len(m[0]))]
-
-def mtxMult(m1, m2):
-        m2t = transpose(m2)
-        mret = []
-        for row in m1:
-                mret.append([])
-                for i in range(len(m2t)):
-                        col = m2t[i]
-                        dot = 0
-                        for j in range(len(row)):
-                                dot += col[j] * row[j]
-                        mret[-1].append(dot)
-        return mret
-
-
-def scalarMult(k, m):
-        return [[k * i for i in j] for j in m]
-
-def idMtx(n):
-        return [[0 if i != j else 1 for i in range(n)] for j in range(n)]
-
-def mtxStr(m):
-        ret = '[\n'
-        for row in m:
-                ret += '\t'
-                for n in row:
-                        ret += str(n) + '\t'
-                ret += '\n'
-        return ret + ']'
