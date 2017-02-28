@@ -2,14 +2,14 @@ import math
 from base import Image
 from sys import argv
 
+def intround(x):
+    return int(round(x))
+
 def line(x0, y0, x1, y1):
+    r = intround
+    x0, y0, x1, y1 = r(x0), r(y0), r(x1), r(y1)
     if x0 > x1:  # :)
-        x0 ^= x1
-        x1 ^= x0
-        x0 ^= x1
-        y0 ^= y1
-        y1 ^= y0
-        y0 ^= y1
+        x0, x1, y0, y1 = x1, x0, y1, y0
     if y0 < y1:  # q1
         if y1 - y0 > x1 - x0:  # o2
             return line2(x0, y0, x1, y1)
