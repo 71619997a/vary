@@ -7,9 +7,14 @@ class TransMatrix(object):
         if lst != -1:
             self.lst = lst
 
-    __getitem__ = self.lst.__getitem__
-    __setitem__ = self.lst.__setitem__
-    __missing__ = self.lst.__missing__
+    def __getitem__(self, i):
+        return self.lst[i]
+    
+    def __setitem__(self, i, v):
+        self.lst[i] = v
+
+    def __str__(self):
+        return matrix.toStr(self.lst)
 
     def __mul__(self, mat):
         if isinstance(mat, TransMatrix):
