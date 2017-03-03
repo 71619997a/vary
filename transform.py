@@ -1,5 +1,8 @@
 import matrix
-from math import sin, cos
+import math
+
+sin = lambda t: math.sin(t * math.pi / 180)
+cos = lambda t: math.cos(t * math.pi / 180)
 
 class TransMatrix(object):
     def __init__(self, lst=-1):
@@ -43,27 +46,70 @@ def S(a, b, c):
 def relativeScale(oa, ob, oc, sa, sb, sc):
     return T(oa, ob, oc)*S(sa, sb, sc)*T(-oa, -ob, -oc)
 
-X_AX = 0
-Y_AX = 1
-Z_AX = 2
-def R(t, axis):
+
+def R(axis, t):
     mat = TransMatrix()
     c = cos(t)
     s = sin(t)
-    if axis == Z_AX:
+    if axis == 'x':
         mat[0][0] = c
         mat[0][1] = -s
         mat[1][0] = s
         mat[1][1] = c
-    if axis == X_AX:
+    if axis == 'y':
         mat[1][1] = c
         mat[1][2] = -s
         mat[2][1] = s
         mat[2][2] = c
-    if axis == Y_AX:
+    if axis == 'z':
         mat[0][0] = c
         mat[0][2] = s
         mat[2][0] = -s
         mat[2][2] = c
     return mat
-        
+
+
+def iparse(inp):
+    return [float(i.strip()) for i in inp.split(' ')]
+
+
+if __name__ == '__main__':  # parser
+    from edgeMtx import edgemtx, addEdge, drawEdges
+    from base import Image
+    edges = edgemtx()
+    trans = TransMatrix()
+    while(True):
+        try:
+            inp = raw_input('\n')
+        except EOFError:  # script file
+            break
+        if inp == 'line':
+            inp = raw_input('\n')
+            addEdge(edges, *iparse(inp))
+        elif inp == 'ident':
+            trans = TransMatrix()
+        elif inp == 'scale':
+            inp = raw_input('\n')
+            trans = S(*iparse(inp)) * trans
+        elif inp == 'move':
+            inp = raw_input('\n')
+            trans = T(*iparse(inp)) * trans
+        elif inp == 'rotate':
+            inp = raw_input('\n')
+            axis, t = (i.strip() for i in inp.split(' '))
+            trans = R(axis, float(t)) * trans
+        elif inp == 'apply':
+            edges = trans * edges
+        elif inp == 'display':
+            img = Image(500, 500)
+            drawEdges(edges, img)
+            img.display()
+        elif inp == 'save':
+            print edges
+            inp = raw_input('\n').strip()
+            img = Image(500, 500)
+            drawEdges(edges, img)
+            if inp[-4:] == '.ppm':
+                img.savePpm(inp)
+            else:
+                img.saveAs(inp)

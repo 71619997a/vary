@@ -33,10 +33,11 @@ class Image(object):
                 os.system('rm temp.ppm')
 
         def setPixel(self, x, y, col):
-                try:
-                        self.pixels[y][x] = col
-                except: 
-                        return
+                if x >= 0 and y >= 0:  # no wraparound pls
+                        try:
+                                self.pixels[y][x] = col
+                        except:  # too big
+                                return
 
         def setPixels(self, ls):  # list of (x, y, color)
                 for x, y, col in ls:
