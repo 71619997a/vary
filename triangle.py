@@ -43,13 +43,27 @@ def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
             pts.append((x, y))
     return pts
 
-def triangle(x1, y1, x2, y2, x3, y3):
+def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
     xs = [x1, x2, x3]
     ys = [y1, y2, y3]
+    mxi = -1
     for i in range(3):
-        if ys[i] == max(ys) || ys[i] == min(ys):
+        if ys[i] == max(ys) or ys[i] == min(ys):
             continue
-
+        mxi = i
+        break
+    xp = xs[mxi]
+    yp = ys[mxi]
+    del ys[mxi]
+    del xs[mxi]
+    if sorted(ys) == ys:
+        ys = ys[::-1]
+        xs = xs[::-1]
+    slope = (ys[1] - ys[0]) / float(xs[1] - xs[0])
+    x = (yp - ys[0]) / slope + xs[0]
+    top = topTriangle(yp, min(x, xp), max(x, xp), xs[1], ys[1])
+    bot = botTriangle(yp, min(x, xp), max(x, xp), xs[0], ys[0])
+    return top + bot
 if __name__ == '__main__':
     print 'top tests'
     print topTriangle(10, 0, 5, 4, 6)
