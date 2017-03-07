@@ -72,32 +72,32 @@ def R(axis, t):
 def iparse(inp):
     return [float(i.strip()) for i in inp.split(' ')]
 
-
 if __name__ == '__main__':  # parser
     from edgeMtx import edgemtx, addEdge, drawEdges
     from base import Image
     edges = edgemtx()
     trans = TransMatrix()
+    frc = 0
     while(True):
         try:
-            inp = raw_input('\n')
+            inp = raw_input('')
         except EOFError:  # script file
             break
         if inp == 'line':
-            inp = raw_input('\n')
+            inp = raw_input('')
             addEdge(edges, *iparse(inp))
         elif inp == 'ident':
             trans = TransMatrix()
         elif inp == 'scale':
-            inp = raw_input('\n')
+            inp = raw_input('')
             trans = S(*iparse(inp)) * trans
         elif inp == 'move':
-            inp = raw_input('\n')
+            inp = raw_input('')
             trans = T(*iparse(inp)) * trans
         elif inp == 'rotate':
-            inp = raw_input('\n')
+            inp = raw_input('')
             axis, t = (i.strip() for i in inp.split(' '))
-            trans = R(axis, float(t)) * trans
+            trans = R(axis.lower(), float(t)) * trans
         elif inp == 'apply':
             edges = trans * edges
         elif inp == 'display':
@@ -105,11 +105,16 @@ if __name__ == '__main__':  # parser
             drawEdges(edges, img)
             img.display()
         elif inp == 'save':
-            print edges
-            inp = raw_input('\n').strip()
+            inp = raw_input('').strip()
             img = Image(500, 500)
             drawEdges(edges, img)
             if inp[-4:] == '.ppm':
                 img.savePpm(inp)
             else:
                 img.saveAs(inp)
+        elif inp == 'saveframe':
+            inp = raw_input('').strip()
+            img = Image(500, 500)
+            drawEdges(edges, img)
+            img.savePpm('%s%d.ppm' % (inp, frc))
+            frc += 1
