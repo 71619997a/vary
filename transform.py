@@ -51,17 +51,17 @@ def R(axis, t):
     mat = TransMatrix()
     c = cos(t)
     s = sin(t)
-    if axis == 'x':
+    if axis == 'z':
         mat[0][0] = c
         mat[0][1] = -s
         mat[1][0] = s
         mat[1][1] = c
-    if axis == 'y':
+    if axis == 'x':
         mat[1][1] = c
         mat[1][2] = -s
         mat[2][1] = s
         mat[2][2] = c
-    if axis == 'z':
+    if axis == 'y':
         mat[0][0] = c
         mat[0][2] = s
         mat[2][0] = -s
