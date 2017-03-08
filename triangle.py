@@ -1,6 +1,5 @@
 from line import line
-
-
+import transform
 def sortedInds(lst):
     fix = enumerate(lst)
     sort = sorted(fix, key=lambda t: t[1])
@@ -50,6 +49,7 @@ def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
     return pts
 
 def baseTriangle(yb, xb1, xb2, xp, yp):
+    yb, xb1, xb2, xp, yp = int(yb), int(xb1), int(xb2), int(xp), int(yp)
     if yp >= yb:
         return botTriangle(yb, xb1, xb2, xp, yp)
     return topTriangle(yb, xb1, xb2, xp, yp)
@@ -57,18 +57,22 @@ def baseTriangle(yb, xb1, xb2, xp, yp):
 def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
     ys, order = sortedInds([y1, y2, y3])
     xs = inOrder([x1, x2, x3], order)
-
-    slope = (ys[2] - ys[0]) / float(xs[2] - xs[0])
-    if slope == 0:
-        x = xs[2]
+    if xs[2] == xs[0]:
+        x = xs[0]
     else:
-        x = (ys[1] - ys[0]) / slope + xs[0]
+        slope = (ys[2] - ys[0]) / float(xs[2] - xs[0])
+        if slope == 0:
+            x = xs[2]
+        else:
+            x = (ys[1] - ys[0]) / slope + xs[0]
     top = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[2], ys[2])
     bot = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
     return top + bot
 
 if __name__ == '__main__':
     from base import Image
+    from math import sqrt
+    from edgeMtx import edgemtx, addTriangle, drawTriangles
     print 'top tests'
     print topTriangle(10, 0, 5, 4, 6)
     print topTriangle(10, -2, 3, 4, 6)
@@ -84,3 +88,60 @@ if __name__ == '__main__':
     img = Image(500, 500)
     img.setPixels(colpts)
     img.display()
+    # icosa
+    t = int((1 + sqrt(5)) * 50)
+    p = []
+    p.append((-100,  t,  0))
+    p.append(( 100,  t,  0))
+    p.append((-100, -t,  0))
+    p.append(( 100, -t,  0))
+
+    p.append(( 0, -100,  t))
+    p.append(( 0,  100,  t))
+    p.append(( 0, -100, -t))
+    p.append(( 0,  100, -t))
+
+    p.append(( t,  0, -100))
+    p.append(( t,  0,  100))
+    p.append((-t,  0, -100))
+    p.append((-t,  0,  100))
+
+    combos = []
+    combos.append((0, 11, 5));
+    combos.append((0, 5, 1));
+    combos.append((0, 1, 7));
+    combos.append((0, 7, 10));
+    combos.append((0, 10, 11));
+
+    combos.append((1, 5, 9));
+    combos.append((5, 11, 4));
+    combos.append((11, 10, 2));
+    combos.append((10, 7, 6));
+    combos.append((7, 1, 8));
+
+    combos.append((3, 9, 4));
+    combos.append((3, 4, 2));
+    combos.append((3, 2, 6));
+    combos.append((3, 6, 8));
+    combos.append((3, 8, 9));
+
+    combos.append((4, 9, 5));
+    combos.append((2, 4, 11));
+    combos.append((6, 2, 10));
+    combos.append((8, 6, 7));
+    combos.append((9, 8, 1));
+
+    icosatris = edgemtx()
+    
+    for i, j, k in combos:
+        print p[i] + p[j] + p[k]
+        addTriangle(icosatris, *(p[i] + p[j] + p[k]))
+    icosatris = transform.T(250, 250, 0) * transform.R('z', 20) * transform.R('x', 20) * icosatris
+    mat = transform.T(250, 250, 0) * transform.R('y', 5) * transform.T(-250, -250, 0)
+    for _ in range(72):
+        img = Image(500,500)
+        drawTriangles(icosatris, img)
+        img.savePpm('anim1/%d.ppm' % (_))
+        icosatris = mat * icosatris
+    img.display()
+    
