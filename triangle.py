@@ -1,6 +1,14 @@
 from line import line
 
 
+def sortedInds(lst):
+    fix = enumerate(lst)
+    sort = sorted(fix, key=lambda t: t[1])
+    return tuple(zip(*sort)[::-1])
+
+def inOrder(lst, order):
+    return [lst[i] for i in order]
+
 def topTriangle(yBase, x1Base, x2Base, x1Top, y1Top):
     pts = []
     if x1Base > x1Top:
@@ -12,7 +20,6 @@ def topTriangle(yBase, x1Base, x2Base, x1Top, y1Top):
     else:
         border2 = line(x2Base, yBase, x1Top, y1Top)[::-1]
     i1 = i2 = 0
-    print border1, border2, y1Top, yBase
     for y in range(y1Top, yBase + 1):
         while border1[i1][1] != y:
             i1 += 1
@@ -33,7 +40,6 @@ def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
     else:
         border2 = line(x2Base, yBase, x1Bot, y1Bot)
     i1 = i2 = 0
-    print border1, border2, y1Bot, yBase
     for y in range(yBase, y1Bot + 1):
         while border1[i1][1] != y:
             i1 += 1
@@ -43,28 +49,26 @@ def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
             pts.append((x, y))
     return pts
 
+def baseTriangle(yb, xb1, xb2, xp, yp):
+    if yp >= yb:
+        return botTriangle(yb, xb1, xb2, xp, yp)
+    return topTriangle(yb, xb1, xb2, xp, yp)
+
 def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
-    xs = [x1, x2, x3]
-    ys = [y1, y2, y3]
-    mxi = -1
-    for i in range(3):
-        if ys[i] == max(ys) or ys[i] == min(ys):
-            continue
-        mxi = i
-        break
-    xp = xs[mxi]
-    yp = ys[mxi]
-    del ys[mxi]
-    del xs[mxi]
-    if sorted(ys) == ys:
-        ys = ys[::-1]
-        xs = xs[::-1]
-    slope = (ys[1] - ys[0]) / float(xs[1] - xs[0])
-    x = (yp - ys[0]) / slope + xs[0]
-    top = topTriangle(yp, min(x, xp), max(x, xp), xs[1], ys[1])
-    bot = botTriangle(yp, min(x, xp), max(x, xp), xs[0], ys[0])
+    ys, order = sortedInds([y1, y2, y3])
+    xs = inOrder([x1, x2, x3], order)
+
+    slope = (ys[2] - ys[0]) / float(xs[2] - xs[0])
+    if slope == 0:
+        x = xs[2]
+    else:
+        x = (ys[1] - ys[0]) / slope + xs[0]
+    top = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[2], ys[2])
+    bot = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
     return top + bot
+
 if __name__ == '__main__':
+    from base import Image
     print 'top tests'
     print topTriangle(10, 0, 5, 4, 6)
     print topTriangle(10, -2, 3, 4, 6)
@@ -73,3 +77,10 @@ if __name__ == '__main__':
     print botTriangle(10, 0, 5, 4, 14)
     print botTriangle(10, -2, 3, 4, 14)
     print botTriangle(10, 8, 13, 4, 14)
+    print 'tri tests'
+    t = triangle(100, 300, 250, 100, 350, 200)
+    print t
+    colpts = [i + ((255, 0, 0),) for i in t]
+    img = Image(500, 500)
+    img.setPixels(colpts)
+    img.display()

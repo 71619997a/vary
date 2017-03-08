@@ -1,5 +1,6 @@
 from base import Image
 from line import line
+from triangle import triangle
 import matrix
 
 def edgemtx():
@@ -15,6 +16,10 @@ def addEdge(m, x0, y0, z0, x1, y1, z1):
     addPoint(m, x0, y0, z0)
     addPoint(m, x1, y1, z1)
 
+def addTriangle(m, *args):
+    assert len(args) == 9
+    for i in range(0, 9, 3):
+        addPoint(m, *args[i : i+3])
 
 def drawEdges(m, image, color=(255, 0, 0)):  # draws the edges to an image
     for i in range(0, len(m[0]) - 1, 2):
@@ -22,7 +27,13 @@ def drawEdges(m, image, color=(255, 0, 0)):  # draws the edges to an image
         coloredlin = [xy + (color,) for xy in lin]
         image.setPixels(coloredlin)
 
+def drawTriangles(m, image, color=(255, 0, 0)):
+    for i in range(0, len(m[0]) - 2, 3):
+        tri = triangle(m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2])
+        coloredtri = [xy + (color,) for xy in tri]
+        image.setPixels(coloredtri)
 
+        
 if __name__ == '__main__':
     m1 = [[2, 2, 3], [3, 2, 2]]
     m2 = [[1, 5], [6.5, 4], [1, -0.7]]
@@ -77,6 +88,12 @@ if __name__ == '__main__':
         addEdge(edges, loc + 1, 375, 100, 375, 500 - loc - 2, 100)
         addEdge(edges, 375, 500 - loc - 2, 100, 500 - loc - 3, 125, 100)
         addEdge(edges, 500 - loc - 3, 125, 100, 125, loc + 4, 100)
-        drawEdges(edges, img, (255 - loc / 2, loc / 2, 127))  # crossfade r + g
-    
+        drawEdges(edges, img, (255 - loc / 2, loc / 2, 127))  # crossfade r + g    
+    img.display()
+    tris = edgemtx()
+    img = Image(500, 500)
+    for x in range(0, 500, 50):
+        for y in range(0, 500, 50):
+            addTriangle(tris, x, y, 0, x + 25, y, 0, 250, 250, 250)
+    drawTriangles(tris, img)
     img.display()
