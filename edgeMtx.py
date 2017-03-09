@@ -6,6 +6,10 @@ import matrix
 def edgemtx():
     return [[],[],[],[]]
 
+def addEdgeMtxs(m1, m2):
+    m = [m1[i] + m2[i] for i in range(len(m1))]
+    return m
+
 def addPoint(m, x, y, z):
     m[0].append(x)
     m[1].append(y)
@@ -40,6 +44,23 @@ def drawTriangles(m, image, color=(255, 0, 0), bordercol=(255,255,255)):
         coloredtri = [xy + (color,) for xy in tri] + [xy + (bordercol,) for xy in border]
         image.setPixels(coloredtri)
 
+def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
+    mcols = edgemtx() + [[]]
+    for m, col in ms:
+        mcol = m + [[col] * len(m[0])]
+        mcols = addEdgeMtxs(mcols, mcol)
+    triangles = []
+    for i in range(0, len(mcols[0]) - 2, 3):
+        # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
+        triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]])
+    ordTris = sorted(triangles, key=lambda l: l[6])
+    for t in ordTris:
+        tri = triangle(*t[:6])
+        border = line(*t[:4])
+        border.extend(line(*t[2:6]))
+        border.extend(line(*t[:2] + t[4:6]))
+        coloredtri = [xy + (t[7],) for xy in tri] + [xy + (bordercol,) for xy in border]
+        image.setPixels(coloredtri)
         
 if __name__ == '__main__':
     m1 = [[2, 2, 3], [3, 2, 2]]

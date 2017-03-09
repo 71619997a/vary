@@ -1,5 +1,6 @@
 from line import line
 import transform
+
 def sortedInds(lst):
     fix = enumerate(lst)
     sort = sorted(fix, key=lambda t: t[1])
@@ -72,7 +73,8 @@ def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
 if __name__ == '__main__':
     from base import Image
     from math import sqrt
-    from edgeMtx import edgemtx, addTriangle, drawTriangles
+    from edgeMtx import edgemtx, addTriangle, drawTriangles, drawColoredTriangles
+    from obj import parse
     print 'top tests'
     print topTriangle(10, 0, 5, 4, 6)
     print topTriangle(10, -2, 3, 4, 6)
@@ -134,17 +136,34 @@ if __name__ == '__main__':
     icosatris = edgemtx()
     
     for i, j, k in combos:
-        print p[i] + p[j] + p[k]
         addTriangle(icosatris, *(p[i] + p[j] + p[k]))
-
     icosatris = transform.T(250, 250, 0) * transform.R('z', 20) * transform.R('x', 20) * icosatris
     mat = transform.T(250, 250, 0) * transform.R('y', 5) * transform.T(-250, -250, 0)
-    for i in range(72):
+    for i in range(0):
         img = Image(500,500)
         drawTriangles(icosatris, img)
         if i == 0:
             img.display()
         img.savePpm('anim1/%d.ppm' % (i))
+        print 'Frame %d done' % (i)
         icosatris = mat * icosatris
+    # supa mario baybee
+    print 'SM64 test'
+    triset = parse('mario.obj', 'mario.mtl')
+    coltris = []
+    for i in range(len(triset)):
+        triset[i][0] = transform.T(250, 400, 0) * transform.R('z', 180) * transform.S(1.5, 1.5, 1.5) * triset[i][0]
+    mat = transform.T(250, 400, 0) * transform.R('y', 5) * transform.T(-250, -400, 0)
+    for i in range(72):
+        img = Image(500,500)
+        drawColoredTriangles(triset, img, (180, 180, 180))
+        if i == 0:
+            img.display()
+        img.savePpm('mario/%d.ppm' % (i))
+        print 'Frame %d done' % (i)
+        for j in range(len(triset)):
+            triset[j][0] = mat * triset[j][0]
+        
+    
     
     
