@@ -20,6 +20,15 @@ def addEdge(m, x0, y0, z0, x1, y1, z1):
     addPoint(m, x0, y0, z0)
     addPoint(m, x1, y1, z1)
 
+def addEdgesFromParam(m, fx, fy, fz, step):
+    t = step
+    lastpt = (fx(0), fy(0), fz(0))
+    while t <= 1.001:
+        pt = (fx(t), fy(t), fz(t))
+        addEdge(m, *lastpt + pt)
+        lastpt = pt
+        t += step
+
 def addTriangle(m, *args):
     assert len(args) == 9
     for i in range(0, 9, 3):
@@ -61,8 +70,8 @@ def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
         border.extend(line(*t[:2] + t[4:6]))
         coloredtri = [xy + (t[7],) for xy in tri] + [xy + (bordercol,) for xy in border]
         image.setPixels(coloredtri)
-        
-if __name__ == '__main__':
+
+def mtxTest1():
     m1 = [[2, 2, 3], [3, 2, 2]]
     m2 = [[1, 5], [6.5, 4], [1, -0.7]]
     m3 = [[1, 2, 3, 1], [5, 2, -1, 3], [-1, -5, 3, 6], [2, 4, -7, 2]]
@@ -116,8 +125,10 @@ if __name__ == '__main__':
         addEdge(edges, loc + 1, 375, 100, 375, 500 - loc - 2, 100)
         addEdge(edges, 375, 500 - loc - 2, 100, 500 - loc - 3, 125, 100)
         addEdge(edges, 500 - loc - 3, 125, 100, 125, loc + 4, 100)
-        drawEdges(edges, img, (255 - loc / 2, loc / 2, 127))  # crossfade r + g    
+        drawEdges(edges, img, (255 - loc / 2, loc / 2, 127))  # crossfade r + g
     img.display()
+
+def triangleTest1():
     tris = edgemtx()
     img = Image(500, 500)
     for x in range(0, 500, 50):
@@ -125,3 +136,21 @@ if __name__ == '__main__':
             addTriangle(tris, x, y, 0, x + 25, y, 0, 250, 250, 250)
     drawTriangles(tris, img)
     img.display()
+
+def circleTest1():
+    import math
+    m = edgemtx()
+    addEdgesFromParam(m, lambda t: 250 + 100 * math.cos(t * 2 * math.pi), lambda t: 250 + 100 * math.sin(t * 2 * math.pi), lambda t: 0, 0.01)
+    img = Image(500, 500)
+    drawEdges(m, img)
+    img.display()
+
+def circleTest2():
+    m = edgemtx()
+    for theta in range(36):
+        costheta = math.cos(theta)
+        def fx(t):
+            return 250 + 100 * math.cos(t * 2 * math.pi) * costheta
+        
+if __name__ == '__main__':
+    circleTest1()
