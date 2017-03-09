@@ -28,17 +28,17 @@ def drawEdges(m, image, color=(255, 0, 0)):  # draws the edges to an image
         image.setPixels(coloredlin)
 
 def drawTriangles(m, image, color=(255, 0, 0), bordercol=(255,255,255)):
-    filler = []
-    borderer = []
+    triangles = []
     for i in range(0, len(m[0]) - 2, 3):
-        tri = triangle(m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2])
-        border = line(m[0][i], m[1][i], m[0][i+1], m[1][i+1])
-        border.extend(line(m[0][i], m[1][i], m[0][i+2], m[1][i + 2]))
-        border.extend(line(m[0][i+1], m[1][i+1], m[0][i+2], m[1][i+2]))
-        coloredtri = [xy + (color,) for xy in tri]
-        filler.extend(coloredtri)
-        borderer.extend([xy + (bordercol,) for xy in border])
-    image.setPixels(filler + borderer)
+        triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], sum(m[2][i : i+3])])
+    ordTris = sorted(triangles, key=lambda l: l[6])
+    for t in ordTris:
+        tri = triangle(*t[:6])
+        border = line(*t[:4])
+        border.extend(line(*t[2:6]))
+        border.extend(line(*t[:2] + t[4:6]))
+        coloredtri = [xy + (color,) for xy in tri] + [xy + (bordercol,) for xy in border]
+        image.setPixels(coloredtri)
 
         
 if __name__ == '__main__':

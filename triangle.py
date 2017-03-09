@@ -136,12 +136,15 @@ if __name__ == '__main__':
     for i, j, k in combos:
         print p[i] + p[j] + p[k]
         addTriangle(icosatris, *(p[i] + p[j] + p[k]))
+
     icosatris = transform.T(250, 250, 0) * transform.R('z', 20) * transform.R('x', 20) * icosatris
     mat = transform.T(250, 250, 0) * transform.R('y', 5) * transform.T(-250, -250, 0)
-    for _ in range(72):
+    for i in range(72):
         img = Image(500,500)
         drawTriangles(icosatris, img)
-        img.savePpm('anim1/%d.ppm' % (_))
+        if i == 0:
+            img.display()
+        img.savePpm('anim1/%d.ppm' % (i))
         icosatris = mat * icosatris
-    img.display()
+    
     
