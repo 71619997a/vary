@@ -1,5 +1,12 @@
 from line import line
 import transform
+from matrix import multiply
+from os import chdir
+from png import Reader
+from base import Image
+import obj
+import edgeMtx
+chdir('/storage/emulated/0/qpython/scripts/gfx-base/gfx-base')
 
 def sortedInds(lst):
     fix = enumerate(lst)
@@ -70,100 +77,81 @@ def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
     bot = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
     return top + bot
 
+def getBary(x,y,x1,y1,x2,y2,x3,y3):
+    m = [[y2-y3,x3-x2],[y3-y1,x1-x3]]
+    m = multiply(m, 1./((x1-x3)*(y2-y3)-(y1-y3)*(x2-x3)))
+    rr3 = [[x-x3],[y-y3]]
+    res = multiply(m,rr3)
+    d1 = res[0][0]
+    d2 = res[1][0]
+    return d1, d2, 1-d1-d2
+
+def lerpcol(c1, c2, fac):
+    return tuple(int(c1[i] * (255 - fac) / 255. + c2[i] * fac / 255.) for i in xrange(3))
+
+def drawTexturedTri(*args): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color 15 img
+    print len(args)
+    rgb = args[12]
+    img = args[14]
+    th = len(rgb) - 1
+    tw = len(rgb[0]) / 4 - 1
+    tri = triangle(*args[:6])
+    texs = []
+    for pt in tri:
+        d1,d2,d3=getBary(*pt+args[:6])
+        tc = (args[6]*d1+args[8]*d2+args[10]*d3,
+        args[7]*d1+args[9]*d2+args[11]*d3)
+        # print tc[0], tc[1]
+        if 1>=tc[0]>=0 and 1>=tc[1]>=0:
+            xcor = int(tc[0]*tw)*4
+            ycor = int(tc[1]*th)
+            col = lerpcol(args[13], tuple(rgb[ycor][xcor:xcor+3]), rgb[ycor][xcor + 3])
+            print col
+            img.setPixel(pt[0], pt[1], col)
+
+
+def textureTriMtxs(ms, img):
+    mcols = [[]]*8
+    for m, t, texture, col in ms:
+        if texture is None:
+            rgb = None
+        else:
+            print 'texture isnt none'
+            r = Reader(file=open(texture))
+            rgb = list(r.asRGBA()[2])
+        mcol = m + t + [[rgb] * len(m[0])] + [[col] * len(m[0])]
+        mcols = edgeMtx.addEdgeMtxs(mcols, mcol)
+    triangles = []
+    for i in range(0, (len(mcols[0]) - 2)/3):
+        # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
+        triangles.append([mcols[0][i*3], mcols[1][i*3], mcols[0][i*3 + 1], mcols[1][i*3 + 1], mcols[0][i*3 + 2], mcols[1][i*3 + 2], sum(mcols[2][i*3 : i*3+3]), mcols[4][i*3], mcols[5][i*3], mcols[4][i*3+1], mcols[5][i*3+1], mcols[4][i*3+2], mcols[5][i*3+2], mcols[6][i * 3], mcols[7][i * 3]])
+    ordTris = sorted(triangles, key=lambda l: l[6])
+    print ordTris[0], len(ordTris[0])
+    for t in ordTris:
+        if t[13] is not None:
+            print 'textured'
+            drawTexturedTri(*t[:6] + t[7:] +[img])
+            print t[7:13]
+        else:
+            tri = triangle(*t[:6])
+            coloredtri = [xy + (t[14],) for xy in tri]
+            img.setPixels(coloredtri)
+
+def textureTest():
+    help(Reader)
+    r = Reader(file=open('tesx.png'))
+    rgb = list(r.asRGBA()[2])
+    print len(rgb),len(rgb[0])
+    img = Image(500,500)
+    drawTexturedTri(150,150,300,100,100,300,1,0,0,1,1,1,rgb,(255,255,0),img)
+    img.savePpm('t.ppm')
+
 if __name__ == '__main__':
-    from base import Image
-    from math import sqrt
-    from edgeMtx import edgemtx, addTriangle, drawTriangles, drawColoredTriangles
-    from obj import parse
-    print 'top tests'
-    print topTriangle(10, 0, 5, 4, 6)
-    print topTriangle(10, -2, 3, 4, 6)
-    print topTriangle(10, 8, 13, 4, 6)
-    print 'bot tests'
-    print botTriangle(10, 0, 5, 4, 14)
-    print botTriangle(10, -2, 3, 4, 14)
-    print botTriangle(10, 8, 13, 4, 14)
-    print 'tri tests'
-    t = triangle(100, 300, 250, 100, 350, 200)
-    print t
-    colpts = [i + ((255, 0, 0),) for i in t]
-    img = Image(500, 500)
-    img.setPixels(colpts)
-    img.display()
-    # icosa
-    t = int((1 + sqrt(5)) * 50)
-    p = []
-    p.append((-100,  t,  0))
-    p.append(( 100,  t,  0))
-    p.append((-100, -t,  0))
-    p.append(( 100, -t,  0))
-
-    p.append(( 0, -100,  t))
-    p.append(( 0,  100,  t))
-    p.append(( 0, -100, -t))
-    p.append(( 0,  100, -t))
-
-    p.append(( t,  0, -100))
-    p.append(( t,  0,  100))
-    p.append((-t,  0, -100))
-    p.append((-t,  0,  100))
-
-    combos = []
-    combos.append((0, 11, 5));
-    combos.append((0, 5, 1));
-    combos.append((0, 1, 7));
-    combos.append((0, 7, 10));
-    combos.append((0, 10, 11));
-
-    combos.append((1, 5, 9));
-    combos.append((5, 11, 4));
-    combos.append((11, 10, 2));
-    combos.append((10, 7, 6));
-    combos.append((7, 1, 8));
-
-    combos.append((3, 9, 4));
-    combos.append((3, 4, 2));
-    combos.append((3, 2, 6));
-    combos.append((3, 6, 8));
-    combos.append((3, 8, 9));
-
-    combos.append((4, 9, 5));
-    combos.append((2, 4, 11));
-    combos.append((6, 2, 10));
-    combos.append((8, 6, 7));
-    combos.append((9, 8, 1));
-
-    icosatris = edgemtx()
-    
-    for i, j, k in combos:
-        addTriangle(icosatris, *(p[i] + p[j] + p[k]))
-    icosatris = transform.T(250, 250, 0) * transform.R('z', 20) * transform.R('x', 20) * icosatris
-    mat = transform.T(250, 250, 0) * transform.R('y', 5) * transform.T(-250, -250, 0)
-    for i in range(0):
-        img = Image(500,500)
-        drawTriangles(icosatris, img)
-        if i == 0:
-            img.display()
-        img.savePpm('anim1/%d.ppm' % (i))
-        print 'Frame %d done' % (i)
-        icosatris = mat * icosatris
-    # supa mario baybee
-    print 'SM64 test'
-    triset = parse('mario.obj', 'mario.mtl')
-    coltris = []
+    chdir('mario')
+    triset = obj.parse('mario.obj','mario.mtl')
+    mat = transform.T(250, 250, 0) * transform.R('z', 180)
     for i in range(len(triset)):
-        triset[i][0] = transform.T(250, 400, 0) * transform.R('z', 180) * transform.S(1.5, 1.5, 1.5) * triset[i][0]
-    mat = transform.T(250, 400, 0) * transform.R('y', 5) * transform.T(-250, -400, 0)
-    for i in range(72):
-        img = Image(500,500)
-        drawColoredTriangles(triset, img, (180, 180, 180))
-        if i == 0:
-            img.display()
-        img.savePpm('mario/%d.ppm' % (i))
-        print 'Frame %d done' % (i)
-        for j in range(len(triset)):
-            triset[j][0] = mat * triset[j][0]
-        
-    
-    
-    
+        triset[i][0] = mat * triset[i][0]
+    img = Image(500,500)
+    textureTriMtxs(triset, img)
+    img.savePpm('tex.ppm')
