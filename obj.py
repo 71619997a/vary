@@ -17,6 +17,7 @@ def parse(objfile, mtlfile):
     tcors = []
     triangles = []
     colors = []
+    mtl = ''
     with open(objfile) as f:
         r = f.readlines()
     for line in r:
@@ -28,9 +29,10 @@ def parse(objfile, mtlfile):
             print coords
             tcors.append(coords)
         elif line[:2] == 'f ':
-            indices = tuple(int(i.split('/')[0]) for i in line[2:].strip().split(' '))
-            tindices = tuple(int(i.split('/')[1]) for i in line[2:].strip().split(' '))
-            triangles.append((indices,tindices))
+            if not obj == 'Hair_Cap':
+                indices = tuple(int(i.split('/')[0]) for i in line[2:].strip().split(' '))
+                tindices = tuple(int(i.split('/')[1]) for i in line[2:].strip().split(' '))
+                triangles.append((indices,tindices))
         elif line[:7] == 'usemtl ':
             mtl = line[7:].strip()
             mat = materials[mtl]
@@ -38,6 +40,8 @@ def parse(objfile, mtlfile):
               colors.append((len(triangles), mat['texture'], mat['color']))
             else:
               colors.append((len(triangles), None, mat['color']))
+        elif line[:2] == 'g ':
+            obj = line[2:].strip()
     triset = []
     for i in range(len(colors)):
         start, texture, col = colors[i]

@@ -151,14 +151,14 @@ if __name__ == '__main__':
     tc = {}
     chdir('mario')
     triset = obj.parse('mario.obj','mario.mtl')
-    mat = transform.T(250, 400, 0) * transform.R('z', 180) * transform.S(1.5,1.5,1.5)
+    mat = transform.T(250, 400, 0) * transform.R('z', 180) * transform.S(1.5,1.5,1.5) * transform.R('y', 180)
     for i in range(len(triset)):
         triset[i][0] = mat * triset[i][0]
     img = Image(500,500)
     mat = transform.T(250,400,0)*transform.R('y',5)*transform.T(-250,-400,0)
     textureTriMtxs(triset,img,tc)
     print len(tc)
-    img.saveAs('../../gfx/mar.png')
+    img.display()
     for i in range(72):
         img = Image(500,500)
         for j in range(len(triset)):
