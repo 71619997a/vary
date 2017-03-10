@@ -6,7 +6,7 @@ from png import Reader
 from base import Image
 import obj
 import edgeMtx
-chdir('/storage/emulated/0/qpython/scripts/gfx-base/gfx-base')
+#chdir('/storage/emulated/0/qpython/scripts/gfx-base/gfx-base')
 
 def sortedInds(lst):
     fix = enumerate(lst)
@@ -90,8 +90,8 @@ def lerpcol(c1, c2, fac):
     return tuple(int(c1[i] * (255 - fac) / 255. + c2[i] * fac / 255.) for i in xrange(3))
 
 def drawTexturedTri(*args): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color 15 img
-    print len(args)
     rgb = args[12]
+    l = len(rgb)-1
     img = args[14]
     th = len(rgb) - 1
     tw = len(rgb[0]) / 4 - 1
@@ -105,20 +105,24 @@ def drawTexturedTri(*args): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color 1
         if 1>=tc[0]>=0 and 1>=tc[1]>=0:
             xcor = int(tc[0]*tw)*4
             ycor = int(tc[1]*th)
-            col = lerpcol(args[13], tuple(rgb[ycor][xcor:xcor+3]), rgb[ycor][xcor + 3])
-            print col
+            col = lerpcol(args[13], tuple(rgb[l-ycor][xcor:xcor+3]), rgb[l-ycor][xcor + 3])
+            
             img.setPixel(pt[0], pt[1], col)
+        else:
+            img.setPixel(pt[0], pt[1], args[13])
 
 
-def textureTriMtxs(ms, img):
+def textureTriMtxs(ms, img, texcache):
     mcols = [[]]*8
     for m, t, texture, col in ms:
         if texture is None:
             rgb = None
         else:
-            print 'texture isnt none'
-            r = Reader(file=open(texture))
-            rgb = list(r.asRGBA()[2])
+            if texture not in texcache:
+                r = Reader(file=open(texture))
+                rgb = list(r.asRGBA()[2])
+                texcache[texture] = rgb
+            rgb = texcache[texture]
         mcol = m + t + [[rgb] * len(m[0])] + [[col] * len(m[0])]
         mcols = edgeMtx.addEdgeMtxs(mcols, mcol)
     triangles = []
@@ -126,12 +130,9 @@ def textureTriMtxs(ms, img):
         # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
         triangles.append([mcols[0][i*3], mcols[1][i*3], mcols[0][i*3 + 1], mcols[1][i*3 + 1], mcols[0][i*3 + 2], mcols[1][i*3 + 2], sum(mcols[2][i*3 : i*3+3]), mcols[4][i*3], mcols[5][i*3], mcols[4][i*3+1], mcols[5][i*3+1], mcols[4][i*3+2], mcols[5][i*3+2], mcols[6][i * 3], mcols[7][i * 3]])
     ordTris = sorted(triangles, key=lambda l: l[6])
-    print ordTris[0], len(ordTris[0])
     for t in ordTris:
         if t[13] is not None:
-            print 'textured'
             drawTexturedTri(*t[:6] + t[7:] +[img])
-            print t[7:13]
         else:
             tri = triangle(*t[:6])
             coloredtri = [xy + (t[14],) for xy in tri]
@@ -147,11 +148,21 @@ def textureTest():
     img.savePpm('t.ppm')
 
 if __name__ == '__main__':
+    tc = {}
     chdir('mario')
     triset = obj.parse('mario.obj','mario.mtl')
-    mat = transform.T(250, 250, 0) * transform.R('z', 180)
+    mat = transform.T(250, 400, 0) * transform.R('z', 180) * transform.S(1.5,1.5,1.5)
     for i in range(len(triset)):
         triset[i][0] = mat * triset[i][0]
     img = Image(500,500)
-    textureTriMtxs(triset, img)
-    img.savePpm('tex.ppm')
+    mat = transform.T(250,400,0)*transform.R('y',5)*transform.T(-250,-400,0)
+    textureTriMtxs(triset,img,tc)
+    print len(tc)
+    img.saveAs('../../gfx/mar.png')
+    for i in range(72):
+        img = Image(500,500)
+        for j in range(len(triset)):
+            triset[j][0] = mat * triset[j][0]
+        textureTriMtxs(triset, img,tc)
+        img.savePpm('../animar/%d.ppm'%(i))
+        print i, 'drawn'
