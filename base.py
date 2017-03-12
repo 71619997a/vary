@@ -7,6 +7,7 @@ import matrix
 WIDTH = 500
 HEIGHT = 500
 
+rgbStrTable = [str(i) for i in range(256)]
 class Image(object):
         def __init__(self, w, h):
                 self.pixels = [[(0,0,0) for _ in xrange(w)] for __ in xrange(h)]
@@ -14,12 +15,20 @@ class Image(object):
                 self.height = h
 
         def savePpm(self, name):
+                header = 'P6 %d %d 255\n' % (self.width, self.height)
+                ba = bytearray([c for row in self.pixels for rgb in row for c in rgb])
+                # for row in self.pixels:
+                #         for rgb in row:
+                #                 ba.extend(rgb)
                 with open(name, 'w') as f:
-                        f.write('P3 %d %d 255\n' % (self.width, self.height))
-                        for row in self.pixels:
-                                for rgb in row:
-                                        f.write('%d %d %d ' % rgb)
-                                f.write('\n')
+                        f.write(header)
+                        f.write(ba)
+                # with open(name, 'w') as f:
+                #         f.write('P3 %d %d 255\n' % (self.width, self.height))
+                #         for row in self.pixels:
+                #                 for rgb in row:
+                #                         f.write('%d %d %d ' % tuple(rgb))
+                #                 f.write('\n')
 
 
         def saveAs(self, name):

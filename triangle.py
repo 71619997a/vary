@@ -77,39 +77,30 @@ def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
     bot = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
     return top + bot
 
-def getBary(x,y,x1,y1,x2,y2,x3,y3):
-    m = [[y2-y3,x3-x2],[y3-y1,x1-x3]]
-    m = multiply(m, 1./((x1-x3)*(y2-y3)-(y1-y3)*(x2-x3)))
-    rr3 = [[x-x3],[y-y3]]
-    res = multiply(m,rr3)
-    d1 = res[0][0]
-    d2 = res[1][0]
+def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
+    d1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / det
+    d2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / det
     return d1, d2, 1-d1-d2
 
-def lerpcol(c1, c2, fac):
-    return tuple(int(c1[i] * (255 - fac) / 255. + c2[i] * fac / 255.) for i in xrange(3))
-
-def drawTexturedTri(*args): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color 15 img
-    rgb = args[12]
+def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol, img): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color 15 img
     l = len(rgb)-1
-    img = args[14]
     th = len(rgb) - 1
     tw = len(rgb[0]) / 4 - 1
-    tri = triangle(*args[:6])
+    tri = triangle(x1,y1,x2,y2,x3,y3)
     texs = []
+    det = float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3))
     for pt in tri:
-        d1,d2,d3=getBary(*pt+args[:6])
-        tc = (args[6]*d1+args[8]*d2+args[10]*d3,
-        args[7]*d1+args[9]*d2+args[11]*d3)
+        d1,d2,d3=getBary(pt[0], pt[1], x1, y1, x2, y2, x3, y3, det)
+        tcx = tx1*d1+tx2*d2+tx3*d3
+        tcy = ty1*d1+ty2*d2+ty3*d3
         # print tc[0], tc[1]
-        if 1>=tc[0]>=0 and 1>=tc[1]>=0:
-            xcor = int(tc[0]*tw)*4
-            ycor = int(tc[1]*th)
-            col = lerpcol(args[13], tuple(rgb[l-ycor][xcor:xcor+3]), rgb[l-ycor][xcor + 3])
-            
-            img.setPixel(pt[0], pt[1], col)
+        if 1>=tcx>=0 and 1>=tcy>=0:
+            xcor = int(tcx*tw)*4
+            ycor = int(tcy*th)
+            if rgb[l-ycor][xcor + 3] == 255:
+                img.setPixel(pt[0], pt[1], rgb[l-ycor][xcor:xcor+3])
         else:
-            img.setPixel(pt[0], pt[1], args[13])
+            img.setPixel(pt[0], pt[1], bgcol)
 
 
 def textureTriMtxs(ms, img, texcache):
@@ -148,10 +139,11 @@ def textureTest():
     img.savePpm('t.ppm')
 
 if __name__ == '__main__':
+    from time import time
     tc = {}
     chdir('mario')
     triset = obj.parse('mario.obj','mario.mtl')
-    mat = transform.T(250, 400, 0) * transform.R('z', 180) * transform.S(1.5,1.5,1.5) * transform.R('y', 180)
+    mat = transform.T(250, 400, 0) * transform.R('z', 180) * transform.S(1.5,1.5,1.5)
     for i in range(len(triset)):
         triset[i][0] = mat * triset[i][0]
     img = Image(500,500)
@@ -160,9 +152,21 @@ if __name__ == '__main__':
     print len(tc)
     img.display()
     for i in range(72):
+        print 'making image...',
+        a = time()
         img = Image(500,500)
+        print (time() - a) * 1000, 'ms'
+        print 'transforming...',
+        a = time()
         for j in range(len(triset)):
             triset[j][0] = mat * triset[j][0]
+        print (time() - a) * 1000, 'ms'
+        print 'texturing...',
+        a = time()
         textureTriMtxs(triset, img,tc)
+        print (time() - a) * 1000, 'ms'
+        print 'saving...',
+        a = time()
         img.savePpm('../animar/%d.ppm'%(i))
+        print (time() - a) * 1000, 'ms'
         print i, 'drawn'
