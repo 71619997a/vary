@@ -10,7 +10,7 @@ HEIGHT = 500
 rgbStrTable = [str(i) for i in range(256)]
 class Image(object):
         def __init__(self, w, h):
-                self.pixels = [[(0,0,0) for _ in xrange(w)] for __ in xrange(h)]
+                self.pixels = [[[0,0,0] for _ in xrange(w)] for __ in xrange(h)]
                 self.width = w
                 self.height = h
 
