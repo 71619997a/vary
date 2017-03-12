@@ -3,14 +3,14 @@ import math
 import os
 import re
 import matrix
-
+from time import time
 WIDTH = 500
 HEIGHT = 500
 
 rgbStrTable = [str(i) for i in range(256)]
 class Image(object):
         def __init__(self, w, h):
-                self.pixels = [[[0,0,0] for _ in xrange(w)] for __ in xrange(h)]
+                self.pixels = [[(0,0,0) for _ in xrange(w)] for __ in xrange(h)]
                 self.width = w
                 self.height = h
 
@@ -20,7 +20,7 @@ class Image(object):
                 # for row in self.pixels:
                 #         for rgb in row:
                 #                 ba.extend(rgb)
-                with open(name, 'w') as f:
+                with open(name, 'wb') as f:
                         f.write(header)
                         f.write(ba)
                 # with open(name, 'w') as f:

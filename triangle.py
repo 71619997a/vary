@@ -3,6 +3,7 @@ import transform
 from matrix import multiply
 from os import chdir
 from png import Reader
+from time import time
 from base import Image
 import obj
 import edgeMtx
@@ -82,15 +83,16 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
     d2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / det
     return d1, d2, 1-d1-d2
 
-def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol, img): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color 15 img
+def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color
+    a = time()
+    pts = []
     l = len(rgb)-1
     th = len(rgb) - 1
     tw = len(rgb[0]) / 4 - 1
     tri = triangle(x1,y1,x2,y2,x3,y3)
-    texs = []
     det = float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3))
-    for pt in tri:
-        d1,d2,d3=getBary(pt[0], pt[1], x1, y1, x2, y2, x3, y3, det)
+    for x, y in tri:
+        d1,d2,d3=getBary(x, y, x1, y1, x2, y2, x3, y3, det)
         tcx = tx1*d1+tx2*d2+tx3*d3
         tcy = ty1*d1+ty2*d2+ty3*d3
         # print tc[0], tc[1]
@@ -98,9 +100,10 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, b
             xcor = int(tcx*tw)*4
             ycor = int(tcy*th)
             if rgb[l-ycor][xcor + 3] == 255:
-                img.setPixel(pt[0], pt[1], rgb[l-ycor][xcor:xcor+3])
+                pts.append((x, y, rgb[l-ycor][xcor:xcor+3]))
         else:
-            img.setPixel(pt[0], pt[1], bgcol)
+            pts.append((x, y, bgcol))
+    return pts
 
 
 def textureTriMtxs(ms, img, texcache):
@@ -117,13 +120,13 @@ def textureTriMtxs(ms, img, texcache):
         mcol = m + t + [[rgb] * len(m[0])] + [[col] * len(m[0])]
         mcols = edgeMtx.addEdgeMtxs(mcols, mcol)
     triangles = []
-    for i in range(0, (len(mcols[0]) - 2)/3):
+    for i in range(0, len(mcols[0]) - 2, 3):
         # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
-        triangles.append([mcols[0][i*3], mcols[1][i*3], mcols[0][i*3 + 1], mcols[1][i*3 + 1], mcols[0][i*3 + 2], mcols[1][i*3 + 2], sum(mcols[2][i*3 : i*3+3]), mcols[4][i*3], mcols[5][i*3], mcols[4][i*3+1], mcols[5][i*3+1], mcols[4][i*3+2], mcols[5][i*3+2], mcols[6][i * 3], mcols[7][i * 3]])
+        triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i], mcols[7][i]])
     ordTris = sorted(triangles, key=lambda l: l[6])
     for t in ordTris:
         if t[13] is not None:
-            drawTexturedTri(*t[:6] + t[7:] +[img])
+            img.setPixels(drawTexturedTri(*t[:6] + t[7:]))
         else:
             tri = triangle(*t[:6])
             coloredtri = [xy + (t[14],) for xy in tri]
