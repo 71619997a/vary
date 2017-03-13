@@ -113,7 +113,8 @@ def textureTriMtxs(ms, img, texcache):
             rgb = None
         else:
             if texture not in texcache:
-                r = Reader(file=open(texture))
+                print texture
+                r = Reader(texture)
                 rgb = list(r.asRGBA()[2])
                 texcache[texture] = rgb
             rgb = texcache[texture]
