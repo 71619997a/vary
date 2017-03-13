@@ -125,13 +125,17 @@ def textureTriMtxs(ms, img, texcache):
         # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
         triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i], mcols[7][i]])
     ordTris = sorted(triangles, key=lambda l: l[6])
+    times = 0
     for t in ordTris:
+        a = time()
         if t[13] is not None:
             img.setPixels(drawTexturedTri(*t[:6] + t[7:]))
         else:
             tri = triangle(*t[:6])
             coloredtri = [xy + (t[14],) for xy in tri]
             img.setPixels(coloredtri)
+        times += time() - a
+    print times / 1.0 / len(ordTris) * 1000
 
 def textureTest():
     help(Reader)
