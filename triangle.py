@@ -7,6 +7,8 @@ from time import time
 from base import Image
 import obj
 import edgeMtx
+import numpy as np
+import matrix
 #chdir('/storage/emulated/0/qpython/scripts/gfx-base/gfx-base')
 
 
@@ -184,10 +186,12 @@ def drawTexturedTri(m, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol): #1-6 vertices,
         [tw, 0],
         [0, th]
     ]
-    result = multiply(S, multiply(texT, multiply(baryT, T)))
-    tri = zip(*triangle(x1, y1, x2, y2, x3, y3))
-    tri += [[1.] * len(tri[0])]
-    transTri = multiply(result, tri)
+    result = np.array(multiply(S, multiply(texT, multiply(baryT, T))), dtype=np.dtype(np.float32))
+    tri = np.array(zip(*triangle(x1, y1, x2, y2, x3, y3)), dtype=np.dtype(np.int32))
+    tri = np.vstack((tri, np.ones((1, len(tri[0])), dtype=np.dtype(np.int32))))
+    transTri = np.zeros((2, len(tri[0])), dtype=np.dtype(np.float32))
+    matrix.mat_23_3n_mult_kernel[len(tri[0]) / 256 + 1, 256](result, tri, transTri, len(tri[0]))
+    #transTri = multiply(result, tri)
     def getcol(i):
         tcx = int(transTri[0][i])
         tcy = int(transTri[1][i])

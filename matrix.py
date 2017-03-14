@@ -1,3 +1,29 @@
+from numba import cuda, jit
+import numba as nb
+
+@cuda.jit
+def mat_23_3n_mult_kernel(m23, m3n, mres, n):
+        xIdx = cuda.grid(1)
+        if xIdx >= n:
+                return
+        m3npart = cuda.shared.array((3, 256), dtype=nb.float32)
+        m23sh = cuda.shared.array((2, 3), dtype=nb.float32)
+        if cuda.threadIdx.x < 32:
+                for i in range(cuda.threadIdx.x, 256, 32):
+                        m3npart[0][i] = m3n[0][xIdx + i]
+                        m3npart[1][i] = m3n[1][xIdx + i]
+                        m3npart[2][i] = m3n[2][xIdx + i]
+                if cuda.threadIdx.x == 31:
+                        for i in range(2):
+                                for j in range(3):
+                                        m23sh[i][j] = m23[i][j]
+        cuda.syncthreads()
+        for i in range(2): # 1 out = 
+                s = 0
+                for j in range(3):
+                        s += m23sh[i][j] * m3npart[j][cuda.threadIdx.x]
+                mres[i][xIdx] = s
+
 def getcolumn(arr2d, idx):
         col = []
         for row in arr2d:
