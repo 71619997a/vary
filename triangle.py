@@ -154,9 +154,14 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
 
 
 def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color
+    # print x1, y1, x2, y2, x3, y3
+    # x3, y3, tx3, ty3, x1, y1, tx1, ty1, x2, y2, tx2, ty2  = \
+    # (co for tup in sorted(
+    #     ((x1,y1,tx1,ty1),(x2,y2,tx2,ty2),(x3,y3,tx3,ty3)), key=lambda a:a[1])
+    #     for co in tup)
+    # print x1, y1, x2, y2, x3, y3
     a = time()
     pts = []
-    l = len(rgb)-1
     th = len(rgb) - 1
     tw = len(rgb[0]) / 4 - 1
     tri = triangleC(x1,y1,x2,y2,x3,y3)
@@ -167,22 +172,27 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, b
     cy1 = (x3 - x2) * idet
     cy2 = (x1 - x3) * idet
     cy3 = (x2 - x1) * idet
-    tcxinc = c1*tx1+c2*tx2+c3*tx3
-    tcyinc = cy1*ty1+cy2*ty2+cy3*ty3
+    tcxinc = tw * (c1*tx1+c2*tx2+c3*tx3)
+    tcyinc = th * (cy1*ty1+cy2*ty2+cy3*ty3)
     d1,d2,d3 = getBary(tri[0][1], tri[0][0], x1, y1, x2, y2, x3, y3, 1/idet)
-    tcx = tx1*d1+tx2*d2+tx3*d3
-    tcy = ty1*d1+ty2*d2+ty3*d3
+    tcx = tw * (tx1*d1+tx2*d2+tx3*d3)
+    tcy = th * (ty1*d1+ty2*d2+ty3*d3)
+    xlast = tri[0][1]
     for y, x1, x2 in tri:
+        print y, x2-x1
+        tcx -= tcxinc * (xlast - x1 + 1)
         for x in range(x1, x2 + 1):
             # print tc[0], tc[1]
-            if 1>=tcx>=0 and 1>=tcy>=0:
-                xcor = int(tcx*tw)*4
-                ycor = int(tcy*th)
-                if rgb[l-ycor][xcor + 3] == 255:
-                    pts.append((x, y, rgb[l-ycor][xcor:xcor+3]))
+            if th>=tcy>=0 and tw>=tcx>=0:
+                xcor = int(tcx)*4
+                ycor = int(tcy)
+                assert th - ycor >= 0 and xcor >= 0
+                if rgb[th-ycor][xcor + 3] == 255:
+                    pts.append((x, y, rgb[th-ycor][xcor:xcor+3]))
             else:
                 pts.append((x, y, bgcol))
             tcx += tcxinc
+        xlast = x if x2 - x1 > 0 else xlast
         tcy += tcyinc
     return pts
 
