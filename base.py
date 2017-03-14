@@ -42,7 +42,7 @@ class Image(object):
                 os.system('rm temp.ppm')
 
         def setPixel(self, x, y, col):
-                if x >= 0 and y >= 0:  # no wraparound pls
+                if x >= 0 and y >= 0 and col != -1 and col[0] != -1:  # no wraparound pls
                         try:
                                 self.pixels[y][x] = col
                         except:  # too big

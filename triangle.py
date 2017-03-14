@@ -86,7 +86,7 @@ def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
 
 
 
-def topTriangleC(yBase, x1Base, x2Base, x1Top, y1Top):
+def topTriangleTex(yBase, x1Base, x2Base, x1Top, y1Top, rgb):
     pts = []
     if x1Base > x1Top:
         border1 = line(x1Base, yBase, x1Top, y1Top)
@@ -102,11 +102,13 @@ def topTriangleC(yBase, x1Base, x2Base, x1Top, y1Top):
             i1 += 1
         while border2[i2][1] != y:
             i2 += 1
-        pts.append((y, border1[i1][0], border2[i2][0]))
+        for x in range(border1[i1][0], border2[i2][0] + 1):
+            pts.append((x, y, rgb[y][x:x+3]))
     return pts
 
 
-def botTriangleC(yBase, x1Base, x2Base, x1Bot, y1Bot):
+def botTriangleTex(yBase, x1Base, x2Base, x1Bot, y1Bot, rgb):
+
     pts = []
     if x1Base > x1Bot:
         border1 = line(x1Base, yBase, x1Bot, y1Bot)[::-1]
@@ -122,16 +124,17 @@ def botTriangleC(yBase, x1Base, x2Base, x1Bot, y1Bot):
             i1 += 1
         while border2[i2][1] != y:
             i2 += 1
-        pts.append((y, border1[i1][0], border2[i2][0]))
+        for x in range(border1[i1][0], border2[i2][0] + 1):
+            pts.append((x, y, rgb[y][x:x+3]))
     return pts
 
-def baseTriangleC(yb, xb1, xb2, xp, yp):
+def baseTriangleTex(yb, xb1, xb2, xp, yp, rgb):
     yb, xb1, xb2, xp, yp = int(yb), int(xb1), int(xb2), int(xp), int(yp)
     if yp >= yb:
-        return botTriangleC(yb, xb1, xb2, xp, yp), True
-    return topTriangleC(yb, xb1, xb2, xp, yp), False
+        return botTriangleTex(yb, xb1, xb2, xp, yp, rgb), True
+    return topTriangleTex(yb, xb1, xb2, xp, yp, rgb), False
 
-def triangleC(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
+def triangleTex(x1, y1, x2, y2, x3, y3, rgb):  # XXX doesnt handle flat well
     ys, order = sortedInds([y1, y2, y3])
     xs = inOrder([x1, x2, x3], order)
     if xs[2] == xs[0]:
@@ -142,8 +145,8 @@ def triangleC(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
             x = xs[2]
         else:
             x = (ys[1] - ys[0]) / slope + xs[0]
-    t1, isBot1 = baseTriangleC(ys[1], min(x, xs[1]), max(x, xs[1]), xs[2], ys[2])
-    t2, _ = baseTriangleC(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
+    t1, isBot1 = baseTriangleTex(ys[1], min(x, xs[1]), max(x, xs[1]), xs[2], ys[2], rgb)
+    t2, _ = baseTriangleTex(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0], rgb)
     return t2 + t1 if isBot1 else t1 + t2
 
 
@@ -153,21 +156,62 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
     return d1, d2, 1-d1-d2
 
 
-def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color
+def drawTexturedTri(m, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color
     a = time()
-    pts = []
-    l = len(rgb)-1
     th = len(rgb) - 1
     tw = len(rgb[0]) / 4 - 1
-    tri = triangleC(x1,y1,x2,y2,x3,y3)
-    idet = 1/float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3))
-    c1 = (y2 - y3) * idet
-    c2 = (y3 - y1) * idet
-    c3 = (y1 - y2) * idet
-    cy1 = (x3 - x2) * idet
-    cy2 = (x1 - x3) * idet
-    cy3 = (x2 - x1) * idet
-    tcxinc = c1*tx1+c2*tx2+c3*tx3
+    x1, x2, x3, y1, y2, y3 = tuple(m[0]) + tuple(m[1])
+    det = float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3))
+    a = (y2 - y3) / det
+    b = (x3 - x2) / det
+    c = (y3 - y1) / det
+    d = (x1 - x3) / det
+    T = [
+        [1, 0, -x3],
+        [0, 1, -y3],
+        [0, 0, 1]
+    ]
+    baryT = [
+        [a, b, 0],
+        [c, d, 0],
+        [-a-c, -b-d, 1]
+    ]
+    texT = [
+        [tx1, tx2, tx3],
+        [ty1, ty2, ty3]
+    ]
+    S = [
+        [tw, 0],
+        [0, th]
+    ]
+    result = multiply(S, multiply(texT, multiply(baryT, T)))
+    tri = zip(*triangle(x1, y1, x2, y2, x3, y3))
+    tri += [[1.] * len(tri[0])]
+    transTri = multiply(result, tri)
+    def getcol(i):
+        tcx = int(transTri[0][i])
+        tcy = int(transTri[1][i])
+        if tw >= tcx >= 0 and th >= tcy >= 0:
+            tcx *= 4
+            return rgb[th - tcy][tcx:tcx+3]
+        else:
+            return bgcol
+        # try:
+        #     if l >= int(transTri[1][i]):
+        #         row = rgb[l - int(transTri[1][i])]
+        #     else:
+        #         return bgcol
+        #     xcor = int(transTri[0][i]) * 4
+        #     if row[xcor + 3] == 255:
+        #         a = tuple(row[xcor:xcor + 3])
+        #         return a
+        #     else:
+        #         return -1
+        # except IndexError:
+        #     return bgcol
+        # return bgcol
+    pts = [(tri[0][i], tri[1][i], getcol(i)) for i in range(len(tri[0]))]
+    return pts
     tcyinc = cy1*ty1+cy2*ty2+cy3*ty3
     d1,d2,d3 = getBary(tri[0][1], tri[0][0], x1, y1, x2, y2, x3, y3, 1/idet)
     tcx = tx1*d1+tx2*d2+tx3*d3
@@ -194,7 +238,6 @@ def textureTriMtxs(ms, img, texcache):
             rgb = None
         else:
             if texture not in texcache:
-                print texture
                 r = Reader(texture)
                 rgb = list(r.asRGBA()[2])
                 texcache[texture] = rgb
@@ -204,16 +247,16 @@ def textureTriMtxs(ms, img, texcache):
     triangles = []
     for i in range(0, len(mcols[0]) - 2, 3):
         # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
-        triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i], mcols[7][i]])
-    ordTris = sorted(triangles, key=lambda l: l[6])
+        triangles.append([[mcols[0][i:i+3], mcols[1][i:i+3]], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i], mcols[7][i]])
+    ordTris = sorted(triangles, key=lambda l: l[1])
     times = 0
     for t in ordTris:
         a = time()
-        if t[13] is not None:
-            img.setPixels(drawTexturedTri(*t[:6] + t[7:]))
+        if t[8] is not None:
+            img.setPixels(drawTexturedTri(*t[:1] + t[2:]))
         else:
-            tri = triangle(*t[:6])
-            coloredtri = [xy + (t[14],) for xy in tri]
+            tri = triangle(*[i for tup in zip(*t[0]) for i in tup])
+            coloredtri = [xy + (t[9],) for xy in tri]
             img.setPixels(coloredtri)
         times += time() - a
     print times / 1.0 / len(ordTris) * 1000
