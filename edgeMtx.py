@@ -27,6 +27,7 @@ def addEdgesFromParam(m, fx, fy, fz, step):
     lastpt = (fx(0), fy(0), fz(0))
     while t <= 1.001:
         pt = (fx(t), fy(t), fz(t))
+        print pt
         addEdge(m, *lastpt + pt)
         lastpt = pt
         t += step
@@ -35,8 +36,9 @@ def polyParametrize(poly):
     print poly
     def f(t):
         ret = 0
-        for i in range(len(poly)-1, -1, -1):
-            ret += poly[i] * t ** i
+        for i in range(len(poly)):
+            ret += poly[len(poly) - 1 - i] * t ** i
+        return ret
     return f
 
 def addCircle(m, cx, cy, cz, r, step):
@@ -94,27 +96,26 @@ def linspace(p1, stop=None, step=None):
 def sphere(r, step):
     # theta along base circle, phi up
     # radius of base circ = cos phi
-    # height of circ = z = sin phi
-    # x = cos theta cos phi
-    # y = sin theta cos phi
-    # cos p
+    # height of circ = z = cos phi
+    # x = cos theta sin phi
+    # y = sin theta sin phi
     # phi from 0 to pi, theta from 0 to 2pi
-    tspace = list(linspace(0, 1, step))
+    tspace = list(linspace(0, 1 + float(step)/2, step))
     sin1 = [math.sin(t * math.pi) for t in tspace]
     sin2 = [math.sin(t * 2*math.pi) for t in tspace]
     cos1 = [math.cos(t * math.pi) for t in tspace]
     cos2 = [math.cos(t * 2*math.pi) for t in tspace]
     points = []
-    for phi in range(len(tspace)/2+2):
+    for theta in tspace:
         points.append(edgemtx())
-        for theta in range(len(tspace)):
-            addPoint(points[-1], r*cos2[theta] * cos1[phi], r*sin2[theta] * cos1[phi], r*sin1[phi])
+        for phi in tspace:
+            addPoint(points[-1], r*math.sin(phi*math.pi) * math.cos(theta*2*math.pi), r*math.sin(phi*math.pi) * math.sin(theta*2*math.pi), r*math.cos(phi*math.pi))
     tris = edgemtx()
     doublerange = [i for i in range(len(tspace)) for j in range(2)]
     pt_seq = zip([0,1] * len(tspace), doublerange[1:] + [0])
     print pt_seq
-    for i in range(len(tspace)/2+2):
-        rows = [points[i], points[(i + 1) % (len(tspace)/2+2)]]
+    for i in range(len(tspace)):
+        rows = [points[i], points[(i + 1) % (len(tspace))]]
         for j in range(len(pt_seq) - 2):
             args = []
             for k in range(j, j + 3):
@@ -249,8 +250,15 @@ def circleTest2():
         
 if __name__ == '__main__':
     import transform
-    img = Image(500,500)
-    drawTriangles(transform.T(250,250,0)*sphere(200, .05), img)
-    img.saveAs('sph.png')
+    
+    m = transform.T(250,250,0)*transform.R('x', 30)*transform.R('y', 30)*sphere(200, .05)
+    mat = transform.T(250, 250, 0) * transform.R('y', 5) * transform.T(-250, -250, 0)
+    for i in range(72):
+        img = Image(500,500)
+        drawTriangles(m, img)
+        m = mat * m
+        print i, 'iter'
+        img.savePpm('sphere/%d.ppm' % (i))
+    
 
     

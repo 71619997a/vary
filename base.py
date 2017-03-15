@@ -9,8 +9,11 @@ HEIGHT = 500
 
 rgbStrTable = [str(i) for i in range(256)]
 class Image(object):
-        def __init__(self, w, h):
-                self.pixels = [[(0,0,0) for _ in xrange(w)] for __ in xrange(h)]
+        def __init__(self, w, h, pix=None):
+                if pix is None:
+                        self.pixels = [[(0,0,0) for _ in xrange(w)] for __ in xrange(h)]
+                else:
+                        self.pixels = pix
                 self.width = w
                 self.height = h
 
@@ -57,6 +60,9 @@ class Image(object):
                         for x in xrange(self.width):
                                 setPixel(x, y, func(x, y))
 
+        def flipUD(self):
+                return Image(self.width, self.height, self.pixels[::-1])
+    
         @staticmethod
         def fromImage(filename):  # use as img = Image.fromImage(...)
                 with open(filename) as f:
