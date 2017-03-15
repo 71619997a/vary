@@ -37,7 +37,16 @@ def polyParametrize(poly):
         for i in range(len(xpoly)-1, -1, -1):
             ret += poly[i] * t ** i
     return f
-        
+
+def addCircle(m, cx, cy, cz, r, step):
+    def x(t):
+        return math.cos(2*math.pi*t)*r + cx
+    def y(t):
+        return math.sin(2*math.pi*t)*r + cy
+    z = lambda t: cz
+    addEdgesFromParam(m,x,y,z,step)
+
+    
 def addBezier(m, x1, y1, x2, y2, x3, y3, x4, y4, step):
     bezMatrix = [
         [-1, 3, -3, 1],
@@ -52,7 +61,7 @@ def addBezier(m, x1, y1, x2, y2, x3, y3, x4, y4, step):
     z = lambda t: 0
     addEdgesFromParam(m, x, y, z, step)
 
-def addHermite(m, p0x, p0y, p1x, p1y, m0, m1, step):
+def addHermite(m, p0x, p0y, p1x, p1y, m0x, m0y, m1x, m1y, step):
     hermMatrix = [
         [2, -2, 1, 1],
         [-3, 3, -2, -1],

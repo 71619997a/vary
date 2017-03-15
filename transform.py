@@ -73,7 +73,7 @@ def iparse(inp):
     return [float(i.strip()) for i in inp.split(' ')]
 
 if __name__ == '__main__':  # parser
-    from edgeMtx import edgemtx, addEdge, drawEdges
+    from edgeMtx import edgemtx, addEdge, drawEdges, addBezier, addHermite, addCircle
     from base import Image
     edges = edgemtx()
     trans = TransMatrix()
@@ -118,3 +118,12 @@ if __name__ == '__main__':  # parser
             drawEdges(edges, img)
             img.savePpm('%s%d.ppm' % (inp, frc))
             frc += 1
+        elif inp == 'circle':
+            inp = raw_input('').strip()
+            addCircle(*[edges]+iparse(inp)+[100])
+        elif inp == 'bezier':
+            inp = raw_input('').strip()
+            addBezier(*[edges]+iparse(inp)+[100])
+        elif inp == 'hermite':
+            inp = raw_input('').strip()
+            addHermite(*[edges]+iparse(inp)+[100])
