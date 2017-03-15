@@ -29,6 +29,23 @@ def addEdgesFromParam(m, fx, fy, fz, step):
         lastpt = pt
         t += step
 
+def bezierEdges(m, x1, y1, x2, y2, x3, y3, x4, y4, step):
+    bezMatrix = [
+        [-1, 3, -3, 1],
+        [3, -6, 3, 0],
+        [-3, 3, 0, 0],
+        [1, 0, 0, 0]
+    ]
+    xcoef = matrix.multiply(bezMatrix, matrix.transpose([[x1, x2, x3, x4]]))
+    ycoef = matrix.multiply(bezMatrix, matrix.transpose([[y1, y2, y3, y4]]))
+    def x(t):
+        return xcoef[0][0]*t**3 + xcoef[1][0]*t**2 + xcoef[2][0]*t + xcoef[3][0]
+    def y(t):
+        return ycoef[0][0]*t**3 + ycoef[1][0]*t**2 + ycoef[2][0]*t + ycoef[3][0]
+    def z(t):
+        return 0.
+    addEdgesFromParam(m, x, y, z, step)
+
 def addTriangle(m, *args):
     assert len(args) == 9
     for i in range(0, 9, 3):
