@@ -31,7 +31,14 @@ def addEdgesFromParam(m, fx, fy, fz, step):
         lastpt = pt
         t += step
 
-def bezierEdges(m, x1, y1, x2, y2, x3, y3, x4, y4, step):
+def polyParametrize(poly):
+    def f(t):
+        ret = 0
+        for i in range(len(xpoly)-1, -1, -1):
+            ret += poly[i] * t ** i
+    return f
+        
+def addBezier(m, x1, y1, x2, y2, x3, y3, x4, y4, step):
     bezMatrix = [
         [-1, 3, -3, 1],
         [3, -6, 3, 0],
@@ -40,13 +47,72 @@ def bezierEdges(m, x1, y1, x2, y2, x3, y3, x4, y4, step):
     ]
     xcoef = matrix.multiply(bezMatrix, matrix.transpose([[x1, x2, x3, x4]]))
     ycoef = matrix.multiply(bezMatrix, matrix.transpose([[y1, y2, y3, y4]]))
-    def x(t):
-        return xcoef[0][0]*t**3 + xcoef[1][0]*t**2 + xcoef[2][0]*t + xcoef[3][0]
-    def y(t):
-        return ycoef[0][0]*t**3 + ycoef[1][0]*t**2 + ycoef[2][0]*t + ycoef[3][0]
-    def z(t):
-        return 0.
+    x = polyParametrize(xcoef)
+    y = polyParametrize(ycoef)
+    z = lambda t: 0
     addEdgesFromParam(m, x, y, z, step)
+
+def addHermite(m, p0x, p0y, p1x, p1y, m0, m1, step):
+    hermMatrix = [
+        [2, -2, 1, 1],
+        [-3, 3, -2, -1],
+        [0, 0, 1, 0],
+        [1, 0, 0, 0]
+    ]
+    xcoef = matrix.multiply(bezMatrix, matrix.transpose([[p0x, p1x, m0, m1]]))
+    ycoef = matrix.multiply(bezMatrix, matrix.transpose([[p0y, p1y, m0, m1]]))
+    x = polyParametrize(xcoef)
+    y = polyParametrize(ycoef)
+    z = lambda t: 0
+    addEdgesFromParam(m, x, y, z, step)
+
+def linspace(p1, stop=None, step=None):
+    if stop is None:
+        stop = p1
+        start = 0
+        step = 1
+    elif step is None:
+        start = p1
+        step = 1
+    else:
+        start = p1
+    i = start
+    while i < stop:
+        yield i
+        i += step
+    
+def sphere(r, step):
+    # theta along base circle, phi up
+    # radius of base circ = cos phi
+    # height of circ = z = sin phi
+    # x = cos theta cos phi
+    # y = sin theta cos phi
+    # cos p
+    # phi from 0 to pi, theta from 0 to 2pi
+    tspace = list(linspace(0, 1, step))
+    sin1 = [math.sin(t * math.pi) for t in tspace]
+    sin2 = [math.sin(t * 2*math.pi) for t in tspace]
+    cos1 = [math.cos(t * math.pi) for t in tspace]
+    cos2 = [math.cos(t * 2*math.pi) for t in tspace]
+    points = []
+    for phi in range(len(tspace)/2+2):
+        points.append(edgemtx())
+        for theta in range(len(tspace)):
+            addPoint(points[-1], r*cos2[theta] * cos1[phi], r*sin2[theta] * cos1[phi], r*sin1[phi])
+    tris = edgemtx()
+    doublerange = [i for i in range(len(tspace)) for j in range(2)]
+    pt_seq = zip([0,1] * len(tspace), doublerange[1:] + [0])
+    print pt_seq
+    for i in range(len(tspace)/2+2):
+        rows = [points[i], points[(i + 1) % (len(tspace)/2+2)]]
+        for j in range(len(pt_seq) - 2):
+            args = []
+            for k in range(j, j + 3):
+                for l in range(3):
+                    args.append(rows[pt_seq[k][0]][l][pt_seq[k][1]])
+            addTriangle(tris, *args)
+    return tris
+
 
 def addTriangle(m, *args):
     assert len(args) == 9
@@ -83,7 +149,7 @@ def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
         triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]])
     ordTris = sorted(triangles, key=lambda l: l[6])
     for t in ordTris:
-        tri = triangle.triangle(*t[:6])
+        tri =triangle.triangle(*t[:6])
         border = line(*t[:4])
         border.extend(line(*t[2:6]))
         border.extend(line(*t[:2] + t[4:6]))
@@ -170,23 +236,11 @@ def circleTest2():
         costheta = math.cos(theta)
         def fx(t):
             return 250 + 100 * math.cos(t * 2 * math.pi) * costheta
-
-
-def spheretest():
-    m = edgemtx()
-    for theta in range(20):
-        ct = math.cos(theta*math.pi/20)
-        st = math.sin(theta*math.pi/20)
-        def fx(t):
-            return 250+200*ct*math.sin(2*math.pi*t)
-        def fy(t):
-            return 250+200*st*math.sin(2*math.pi*t)
-        def fz(t):
-            return 200*math.cos(2*math.pi*t)
-        addEdgesFromParam(m,fx,fy,fz,.01)
-    print m
-    img = Image(500, 500)
-    drawEdges(m, img)
-    img.savePpm('sph.ppm')
+        
 if __name__ == '__main__':
-    spheretest()
+    import transform
+    img = Image(500,500)
+    drawTriangles(transform.T(250,250,0)*sphere(200, .05), img)
+    img.saveAs('sph.png')
+
+    
