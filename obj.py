@@ -1,6 +1,5 @@
-from edgeMtx import edgemtx, addTriangle
-
 def parse(objfile, mtlfile):
+    from edgeMtx import edgemtx, addTriangle
     with open(mtlfile) as f:
         mtllines = f.readlines()
     materialNext = ''

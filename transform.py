@@ -120,10 +120,10 @@ if __name__ == '__main__':  # parser
             frc += 1
         elif inp == 'circle':
             inp = raw_input('').strip()
-            addCircle(*[edges]+iparse(inp)+[100])
+            addCircle(*[edges]+iparse(inp)+[.01])
         elif inp == 'bezier':
             inp = raw_input('').strip()
-            addBezier(*[edges]+iparse(inp)+[100])
+            addBezier(*[edges]+iparse(inp)+[.01])
         elif inp == 'hermite':
             inp = raw_input('').strip()
-            addHermite(*[edges]+iparse(inp)+[100])
+            addHermite(*[edges]+iparse(inp)+[.01])

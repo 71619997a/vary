@@ -32,9 +32,10 @@ def addEdgesFromParam(m, fx, fy, fz, step):
         t += step
 
 def polyParametrize(poly):
+    print poly
     def f(t):
         ret = 0
-        for i in range(len(xpoly)-1, -1, -1):
+        for i in range(len(poly)-1, -1, -1):
             ret += poly[i] * t ** i
     return f
 
@@ -56,8 +57,8 @@ def addBezier(m, x1, y1, x2, y2, x3, y3, x4, y4, step):
     ]
     xcoef = matrix.multiply(bezMatrix, matrix.transpose([[x1, x2, x3, x4]]))
     ycoef = matrix.multiply(bezMatrix, matrix.transpose([[y1, y2, y3, y4]]))
-    x = polyParametrize(xcoef)
-    y = polyParametrize(ycoef)
+    x = polyParametrize(matrix.transpose(xcoef)[0])
+    y = polyParametrize(matrix.transpose(ycoef)[0])
     z = lambda t: 0
     addEdgesFromParam(m, x, y, z, step)
 
@@ -68,10 +69,10 @@ def addHermite(m, p0x, p0y, p1x, p1y, m0x, m0y, m1x, m1y, step):
         [0, 0, 1, 0],
         [1, 0, 0, 0]
     ]
-    xcoef = matrix.multiply(bezMatrix, matrix.transpose([[p0x, p1x, m0, m1]]))
-    ycoef = matrix.multiply(bezMatrix, matrix.transpose([[p0y, p1y, m0, m1]]))
-    x = polyParametrize(xcoef)
-    y = polyParametrize(ycoef)
+    xcoef = matrix.multiply(hermMatrix, matrix.transpose([[p0x, p1x, m0x, m1x]]))
+    ycoef = matrix.multiply(hermMatrix, matrix.transpose([[p0y, p1y, m0y, m1y]]))
+    x = polyParametrize(matrix.transpose(xcoef)[0])
+    y = polyParametrize(matrix.transpose(ycoef)[0])
     z = lambda t: 0
     addEdgesFromParam(m, x, y, z, step)
 
