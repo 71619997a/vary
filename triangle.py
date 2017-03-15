@@ -100,11 +100,14 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, b
             xcor = int(tcx*tw)*4
             ycor = int(tcy*th)
             if rgb[l-ycor][xcor + 3] == 255:
+                shade = shader(d1,d2,d3,n1x,n1y,n2x,n2y,n3x,n3y,col,Ka,Kd,Ks)
                 pts.append((x, y, rgb[l-ycor][xcor:xcor+3]))
         else:
             pts.append((x, y, bgcol))
     return pts
 
+def shader(b1, b2, b3, n1x, n1y, n2x, n2y, n3x, n3y, col, Ka, Kd, Ks):
+    pass
 
 def textureTriMtxs(ms, img, texcache):
     mcols = [[]]*8

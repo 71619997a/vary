@@ -1,7 +1,9 @@
 from base import Image
 from line import line
-from triangle import triangle
+import triangle
 import matrix
+import math
+
 
 def edgemtx():
     return [[],[],[],[]]
@@ -63,7 +65,7 @@ def drawTriangles(m, image, color=(255, 0, 0), bordercol=(255,255,255)):
         triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], sum(m[2][i : i+3])])
     ordTris = sorted(triangles, key=lambda l: l[6])
     for t in ordTris:
-        tri = triangle(*t[:6])
+        tri = triangle.triangle(*t[:6])
         border = line(*t[:4])
         border.extend(line(*t[2:6]))
         border.extend(line(*t[:2] + t[4:6]))
@@ -81,7 +83,7 @@ def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
         triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]])
     ordTris = sorted(triangles, key=lambda l: l[6])
     for t in ordTris:
-        tri = triangle(*t[:6])
+        tri = triangle.triangle(*t[:6])
         border = line(*t[:4])
         border.extend(line(*t[2:6]))
         border.extend(line(*t[:2] + t[4:6]))
@@ -168,6 +170,23 @@ def circleTest2():
         costheta = math.cos(theta)
         def fx(t):
             return 250 + 100 * math.cos(t * 2 * math.pi) * costheta
-        
+
+
+def spheretest():
+    m = edgemtx()
+    for theta in range(20):
+        ct = math.cos(theta*math.pi/20)
+        st = math.sin(theta*math.pi/20)
+        def fx(t):
+            return 250+200*ct*math.sin(2*math.pi*t)
+        def fy(t):
+            return 250+200*st*math.sin(2*math.pi*t)
+        def fz(t):
+            return 200*math.cos(2*math.pi*t)
+        addEdgesFromParam(m,fx,fy,fz,.01)
+    print m
+    img = Image(500, 500)
+    drawEdges(m, img)
+    img.savePpm('sph.ppm')
 if __name__ == '__main__':
-    circleTest1()
+    spheretest()
