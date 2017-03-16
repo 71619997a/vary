@@ -7,6 +7,7 @@ from time import time
 from base import Image
 import obj
 import edgeMtx
+import math
 #chdir('/storage/emulated/0/qpython/scripts/gfx-base/gfx-base')
 
 def sortedInds(lst):
@@ -79,9 +80,12 @@ def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
     return top + bot
 
 def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
-    d1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / det
-    d2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / det
-    return d1, d2, 1-d1-d2
+    try:
+        d1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / det
+        d2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / det
+        return d1, d2, 1-d1-d2
+    except:
+        return 1, 0, 0
 
 def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color
     a = time()
@@ -122,6 +126,7 @@ det)
     return pts
 
 def normalize(*v):
+    v = list(v)
     norm = math.sqrt(sum([i**2 for i in v]))
     for i in xrange(len(v)):
         v[i] /= norm
@@ -133,8 +138,10 @@ def shader(x,y,z,nx,ny, nz,lx,ly,lz, col, Ia,Id,Is,Ka, Kd, Ks,a):
     Rmx = 2 * Lmn * nx - Lmx
     Rmy = 2 * Lmn * ny - Lmy
     Rmz = 2 * Lmn * nz - Lmz
-    Ip = Ka * Ia + Kd * Lmn * Id + Ks * (-Rmz)**a * Is
-    return tuple(int(i * Ip) for i in col)
+    Ip = Ka * Ia + Kd * Lmn * Id + Ks * (Rmz**a if Rmz >= 0 else -(-Rmz)**a) * Is
+    if Ip <= 0:
+        return (0,0,0)
+    return tuple(int(i * Ip) if i * Ip < 256 else 255 for i in col)
 def textureTriMtxs(ms, img, texcache):
     mcols = [[]]*8
     for m, t, texture, col in ms:
@@ -175,7 +182,7 @@ def textureTest():
     drawTexturedTri(150,150,300,100,100,300,1,0,0,1,1,1,rgb,(255,255,0),img)
     img.savePpm('t.ppm')
 
-if __name__ == '__main__':
+def marioTest():
     from time import time
     tc = {}
     chdir('mario')
@@ -207,3 +214,53 @@ if __name__ == '__main__':
         img.savePpm('../animar/%d.ppm'%(i))
         print (time() - a) * 1000, 'ms'
         print i, 'drawn'
+
+def shadetest():
+    x1, y1, z1 = 100, 100, 200
+    x2, y2, z2 = 300, 150, 0
+    x3, y3, z3 = 150, 300, 0
+    nx1, ny1, nz1 = normalize(x1, y1, z1)
+    nx2, ny2, nz2 = normalize(x2, y2, z2)
+    nx3, ny3, nz3 = normalize(x3, x3, z3)
+    lx, ly, lz = 300, 300, 300
+    col = (255, 150, 30)
+    Ia = 0.3
+    Id = 0.5
+    Is = 0.9
+    Ka = 0.3
+    Kd = 0.5
+    Ks = 0.9
+    a = 0.5
+    img = Image(500, 500)
+    shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,col,Ia,Id,Is,Ka,Kd,Ks,a)
+    print shadePix
+    img.setPixels(shadePix)
+    img.display()
+
+def sphereshade():
+    lx, ly, lz = 400, 200, -1000
+    col = (255, 150, 30)
+    Ia = 0.8
+    Id = 0.8
+    Is = 0.9
+    Ka = 0.7
+    Kd = 0.6
+    Ks = 0.7
+    a = 0.1
+    img = Image(500, 500)
+    tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .05)
+    triList = []
+    for i in range(0, len(tris[0]) - 2, 3):
+        triList.append(tuple(tris[0][i : i + 3] + tris[1][i : i + 3] + tris[2][i : i + 3]))
+    triList.sort(key=lambda t: sum(t[6:9]))
+    
+    for x1, x2, x3, y1, y2, y3, z1, z2, z3 in triList:
+        nx1, ny1, nz1 = normalize(x1 - 250, y1 - 250, z1)
+        nx2, ny2, nz2 = normalize(x2 - 250, y2 - 250, z2)
+        nx3, ny3, nz3 = normalize(x3 - 250, y3 - 250, z3)
+        shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,col,Ia,Id,Is,Ka,Kd,Ks,a)
+        img.setPixels(shadePix)
+    img.display()
+    
+if __name__ == '__main__':
+    sphereshade()
