@@ -2,6 +2,7 @@ from line import line
 import transform
 from matrix import multiply
 from os import chdir
+from multiprocessing import Pool
 from png import Reader
 from time import time
 from base import Image
@@ -255,7 +256,7 @@ def sphereshade():
     
     tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .02)
     sts = edgeMtx.edgemtx()
-    edgeMtx.addCircle(sts,0,0,0,500,.04)
+    edgeMtx.addCircle(sts,0,0,0,500,.01)
     sts = transform.T(250,250,0)*transform.R('x', 90)*sts
     sts = zip(*sts)[::2]
     ke=0
@@ -277,3 +278,4 @@ def sphereshade():
         print ke
 if __name__ == '__main__':
     sphereshade()
+    
