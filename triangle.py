@@ -106,9 +106,35 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, b
             pts.append((x, y, bgcol))
     return pts
 
-def shader(b1, b2, b3, n1x, n1y, n2x, n2y, n3x, n3y, col, Ka, Kd, Ks):
-    pass
+def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,col,Ia,Id,Is,Ka,Kd,Ks,a):
+    pts = []
+    tri = triangle(x1,y1,x2,y2,x3,y3)
+    det = float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1\
+ - y3))
+    for x, y in tri:
+        d1,d2,d3=getBary(x, y, x1, y1, x2, y2, x3, y3, \
+det)
+        nx = nx1*d1+nx2*d2+nx3*d3
+        ny = ny1*d1+ny2*d2+ny3*d3
+        nz = nz1*d1+nz2*d2+nz3*d3
+        z = z1*d1+z2*d2+z3*d3
+        pts.append((x,y,shader(x,y,z,nx,ny, nz,lx,ly,lz, col, Ia,Id,Is, Ka, Kd, Ks, a)))
+    return pts
 
+def normalize(*v):
+    norm = math.sqrt(sum([i**2 for i in v]))
+    for i in xrange(len(v)):
+        v[i] /= norm
+    return v
+        
+def shader(x,y,z,nx,ny, nz,lx,ly,lz, col, Ia,Id,Is,Ka, Kd, Ks,a):
+    Lmx , Lmy, Lmz = normalize( x - lx, y - ly, z-lz)
+    Lmn = Lmx * nx + Lmy * ny + Lmz * nz
+    Rmx = 2 * Lmn * nx - Lmx
+    Rmy = 2 * Lmn * ny - Lmy
+    Rmz = 2 * Lmn * nz - Lmz
+    Ip = Ka * Ia + Kd * Lmn * Id + Ks * (-Rmz)**a * Is
+    return tuple(int(i * Ip) for i in col)
 def textureTriMtxs(ms, img, texcache):
     mcols = [[]]*8
     for m, t, texture, col in ms:

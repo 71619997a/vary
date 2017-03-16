@@ -166,7 +166,8 @@ def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
         border.extend(line(*t[:2] + t[4:6]))
         coloredtri = [xy + (t[7],) for xy in tri] + [xy + (bordercol,) for xy in border]
         image.setPixels(coloredtri)
-
+    
+        
 def mtxTest1():
     m1 = [[2, 2, 3], [3, 2, 2]]
     m2 = [[1, 5], [6.5, 4], [1, -0.7]]

@@ -111,7 +111,7 @@ if __name__ == '__main__':  # parser
             if inp[-4:] == '.ppm':
                 img.flipUD().savePpm(inp)
             else:
-                img.flipUD().saveAs(inp)
+                img.saveAs(inp)
         elif inp == 'saveframe':
             inp = raw_input('').strip()
             img = Image(500, 500)
