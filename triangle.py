@@ -110,7 +110,7 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, b
             pts.append((x, y, bgcol))
     return pts
 
-def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,col,Ia,Id,Is,Ka,Kd,Ks,a):
+def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,col,Ia,Id,Is,Ka,Kd,Ks,a):
     pts = []
     tri = triangle(x1,y1,x2,y2,x3,y3)
     det = float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1\
@@ -122,7 +122,7 @@ det)
         ny = ny1*d1+ny2*d2+ny3*d3
         nz = nz1*d1+nz2*d2+nz3*d3
         z = z1*d1+z2*d2+z3*d3
-        pts.append((x,y,shader(x,y,z,nx,ny, nz,lx,ly,lz, col, Ia,Id,Is, Ka, Kd, Ks, a)))
+        pts.append((x,y,shader(x,y,z,nx,ny, nz,lx,ly,lz, vx,vy,vz,col, Ia,Id,Is, Ka, Kd, Ks, a)))
     return pts
 
 def normalize(*v):
@@ -132,13 +132,17 @@ def normalize(*v):
         v[i] /= norm
     return v
         
-def shader(x,y,z,nx,ny, nz,lx,ly,lz, col, Ia,Id,Is,Ka, Kd, Ks,a):
-    Lmx , Lmy, Lmz = normalize( x - lx, y - ly, z-lz)
+def shader(x,y,z,nx,ny, nz,lx,ly,lz,vx,vy,vz, col, Ia,Id,Is,Ka, Kd, Ks,a):
+    Lmx , Lmy, Lmz = normalize(lx-x,ly-y,lz-z)
     Lmn = Lmx * nx + Lmy * ny + Lmz * nz
     Rmx = 2 * Lmn * nx - Lmx
     Rmy = 2 * Lmn * ny - Lmy
     Rmz = 2 * Lmn * nz - Lmz
-    Ip = Ka * Ia + Kd * Lmn * Id + Ks * (Rmz**a if Rmz >= 0 else -(-Rmz)**a) * Is
+    Vx, Vy, Vz = normalize(vx-x,vy-y,vz-z)
+    try:
+        Ip = Ka * Ia + Kd * Lmn * Id + Ks * math.pow(max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0),a) * Is
+    except:
+        Ip = 1000000000
     if Ip <= 0:
         return (0,0,0)
     return tuple(int(i * Ip) if i * Ip < 256 else 255 for i in col)
@@ -238,7 +242,8 @@ def shadetest():
     img.display()
 
 def sphereshade():
-    lx, ly, lz = 400, 200, -1000
+    lx, ly, lz = 700,100,0
+    vx, vy, vz = 250, 250, 2000
     col = (255, 150, 30)
     Ia = 0.8
     Id = 0.8
@@ -246,21 +251,29 @@ def sphereshade():
     Ka = 0.7
     Kd = 0.6
     Ks = 0.7
-    a = 0.1
-    img = Image(500, 500)
-    tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .05)
-    triList = []
-    for i in range(0, len(tris[0]) - 2, 3):
-        triList.append(tuple(tris[0][i : i + 3] + tris[1][i : i + 3] + tris[2][i : i + 3]))
-    triList.sort(key=lambda t: sum(t[6:9]))
+    a = 20
     
-    for x1, x2, x3, y1, y2, y3, z1, z2, z3 in triList:
-        nx1, ny1, nz1 = normalize(x1 - 250, y1 - 250, z1)
-        nx2, ny2, nz2 = normalize(x2 - 250, y2 - 250, z2)
-        nx3, ny3, nz3 = normalize(x3 - 250, y3 - 250, z3)
-        shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,col,Ia,Id,Is,Ka,Kd,Ks,a)
-        img.setPixels(shadePix)
-    img.display()
-    
+    tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .02)
+    sts = edgeMtx.edgemtx()
+    edgeMtx.addCircle(sts,0,0,0,500,.04)
+    sts = transform.T(250,250,0)*transform.R('x', 90)*sts
+    sts = zip(*sts)[::2]
+    ke=0
+    for lx,ly,lz,_ in sts:
+        img = Image(500,500)
+        triList = []
+        for i in range(0, len(tris[0]) - 2, 3):
+            triList.append(tuple(tris[0][i : i + 3] + tris[1][i : i + 3] + tris[2][i : i + 3]))
+        triList.sort(key=lambda t: sum(t[6:9]))
+        print 'sorted lis'
+        for x1, x2, x3, y1, y2, y3, z1, z2, z3 in triList:
+            nx1, ny1, nz1 = normalize(x1 - 250, y1 - 250, z1)
+            nx2, ny2, nz2 = normalize(x2 - 250, y2 - 250, z2)
+            nx3, ny3, nz3 = normalize(x3 - 250, y3 - 250, z3)
+            shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,col,Ia,Id,Is,Ka,Kd,Ks,a)
+            img.setPixels(shadePix)
+        img.savePpm('shade/%d.ppm'%(ke))
+        ke+=1
+        print ke
 if __name__ == '__main__':
     sphereshade()
