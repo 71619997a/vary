@@ -101,10 +101,6 @@ def sphere(r, step):
     # y = sin theta sin phi
     # phi from 0 to pi, theta from 0 to 2pi
     tspace = list(linspace(0, 1 + float(step)/2, step))
-    sin1 = [math.sin(t * math.pi) for t in tspace]
-    sin2 = [math.sin(t * 2*math.pi) for t in tspace]
-    cos1 = [math.cos(t * math.pi) for t in tspace]
-    cos2 = [math.cos(t * 2*math.pi) for t in tspace]
     points = []
     for theta in tspace:
         points.append(edgemtx())
@@ -252,7 +248,7 @@ def circleTest2():
 if __name__ == '__main__':
     import transform
     
-    m = transform.T(250,250,0)*transform.R('x', 30)*transform.R('y', 30)*sphere(200, .05)
+    m = transform.T(250,250,0)*transform.R('x', 30)*transform.R('y', 30)*sphere(200, .01)
     mat = transform.T(250, 250, 0) * transform.R('y', 5) * transform.T(-250, -250, 0)
     for i in range(72):
         img = Image(500,500)
@@ -260,6 +256,6 @@ if __name__ == '__main__':
         m = mat * m
         print i, 'iter'
         img.savePpm('sphere/%d.ppm' % (i))
-    
+        img.display()
 
     
