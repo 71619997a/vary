@@ -111,7 +111,7 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, b
             pts.append((x, y, bgcol))
     return pts
 
-def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,col,Ia,Id,Is,Ka,Kd,Ks,a):
+def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a):
     pts = []
     tri = triangle(x1,y1,x2,y2,x3,y3)
     det = float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1\
@@ -123,7 +123,7 @@ det)
         ny = ny1*d1+ny2*d2+ny3*d3
         nz = nz1*d1+nz2*d2+nz3*d3
         z = z1*d1+z2*d2+z3*d3
-        pts.append((x,y,shader(x,y,z,nx,ny, nz,lx,ly,lz, vx,vy,vz,col, Ia,Id,Is, Ka, Kd, Ks, a)))
+        pts.append((x,y,shader(x,y,z,nx,ny, nz,lx,ly,lz, vx,vy,vz, Ia,Id,Is, Ka, Kd, Ks, a)))
     return pts
 
 def normalize(*v):
@@ -133,7 +133,7 @@ def normalize(*v):
         v[i] /= norm
     return v
         
-def shader(x,y,z,nx,ny, nz,lx,ly,lz,vx,vy,vz, col, Ia,Id,Is,Ka, Kd, Ks,a):
+def shader(x,y,z,nx,ny, nz,lx,ly,lz,vx,vy,vz, Ia,Id,Is,Ka, Kd, Ks,a):
     Lmx , Lmy, Lmz = normalize(lx-x,ly-y,lz-z)
     Lmn = Lmx * nx + Lmy * ny + Lmz * nz
     Rmx = 2 * Lmn * nx - Lmx
@@ -231,35 +231,41 @@ def shadetest():
     nx3, ny3, nz3 = normalize(x3, x3, z3)
     lx, ly, lz = 300, 300, 300
     col = (255, 150, 30)
-    Ia = (255,150,30)
-    Id = (255,150,30)
+    Ia = (255,200,150)
+    Id = (255,200, 150)
     Is = (255,200,150)
     Ka = (0,200,100)
     Kd = (0,200,100)
     Ks = (255,255,255)
     a = 0.5
     img = Image(500, 500)
-    shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,col,Ia,Id,Is,Ka,Kd,Ks,a)
+    shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,Ia,Id,Is,Ka,Kd,Ks,a)
     print shadePix
     img.setPixels(shadePix)
     img.display()
 
 def sphereshade():
+    l = tuple(raw_input('light position x,y,z: '))
+    v = int(raw_input('viewer position z: '))
+    lc = tuple(raw_input('light color r,g,b: '))
+    sc = tuple(raw_input('spectral color r,g,b: '))
+    bc = tuple(raw_input('ball color r,g,b: '))
+    a = int(raw_input('shininess a: '))
     lx, ly, lz = 700,100,0
-    vx, vy, vz = 250, 250, 2000
+    vx, vy, vz = 250, 250, 1000
     col = (255, 150, 30)
-    Ia = (255,150,30)
-    Id = (255,150,30)
-    Is = (255,200,150)
-    Ka = (0,200,100)
-    Kd = (0,200,100)
-    Ks = (255,255,255)
-    a = 20
+    Ia = (100, 100, 100)
+    Id = (255, 0, 0)
+    Is = (255, 150, 150)
+    Ka = (50, 50, 255)
+    Kd = (50, 50, 255)
+    Ks = (50, 50, 255)
+    a = 25
     
     tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .02)
     sts = edgeMtx.edgemtx()
     edgeMtx.addCircle(sts,0,0,0,500,.05)
-    sts = transform.T(250,250,0)*transform.R('x', 90)*sts
+    sts = transform.T(250,250,0)*transform.R('y', -45)*transform.R('x', 90)*sts
     sts = zip(*sts)[::2]
     ke=0
     for lx,ly,lz,_ in sts:
@@ -273,9 +279,10 @@ def sphereshade():
             nx1, ny1, nz1 = normalize(x1 - 250, y1 - 250, z1)
             nx2, ny2, nz2 = normalize(x2 - 250, y2 - 250, z2)
             nx3, ny3, nz3 = normalize(x3 - 250, y3 - 250, z3)
-            shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,col,Ia,Id,Is,Ka,Kd,Ks,a)
+            shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a)
             img.setPixels(shadePix)
         img.savePpm('shade/%d.ppm'%(ke))
+        if ke == 0: img.display()
         ke+=1
         print ke
 if __name__ == '__main__':

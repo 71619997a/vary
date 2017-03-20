@@ -27,7 +27,6 @@ def addEdgesFromParam(m, fx, fy, fz, step):
     lastpt = (fx(0), fy(0), fz(0))
     while t <= 1.001:
         pt = (fx(t), fy(t), fz(t))
-        print pt
         addEdge(m, *lastpt + pt)
         lastpt = pt
         t += step
