@@ -245,23 +245,14 @@ def shadetest():
     img.display()
 
 def sphereshade():
-    l = tuple(raw_input('light position x,y,z: '))
-    v = int(raw_input('viewer position z: '))
-    lc = tuple(raw_input('light color r,g,b: '))
-    sc = tuple(raw_input('spectral color r,g,b: '))
-    bc = tuple(raw_input('ball color r,g,b: '))
-    a = int(raw_input('shininess a: '))
     lx, ly, lz = 700,100,0
-    vx, vy, vz = 250, 250, 1000
-    col = (255, 150, 30)
+    vx, vy = 250, 250
     Ia = (100, 100, 100)
     Id = (255, 0, 0)
     Is = (255, 150, 150)
-    Ka = (50, 50, 255)
-    Kd = (50, 50, 255)
-    Ks = (50, 50, 255)
-    a = 25
-    
+    Ks = (128, 128, 128)
+
+    zbuf = [[None for _ in xrange(500)] for _ in xrange(500)]
     tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .02)
     sts = edgeMtx.edgemtx()
     edgeMtx.addCircle(sts,0,0,0,500,.05)
@@ -279,12 +270,37 @@ def sphereshade():
             nx1, ny1, nz1 = normalize(x1 - 250, y1 - 250, z1)
             nx2, ny2, nz2 = normalize(x2 - 250, y2 - 250, z2)
             nx3, ny3, nz3 = normalize(x3 - 250, y3 - 250, z3)
-            shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a)
+            shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a,zbuf)
             img.setPixels(shadePix)
         img.savePpm('shade/%d.ppm'%(ke))
         if ke == 0: img.display()
         ke+=1
         print ke
+
+def sphinput():
+    lx, ly, lz = tuple(input('light position x,y,z: '))
+    vz = int(input('viewer position z: '))
+    vx = vy = 250
+    Ia = tuple(input('ambient color r,g,b: '))
+    Id = tuple(input('light color r,g,b: '))
+    Is = tuple(input('spectral color r,g,b: '))
+    Ka = Kd = tuple(input('ball color r,g,b: '))
+    Ks = 255, 255, 255
+    a = int(input('shininess a: '))
+    tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .02)
+    img = Image(500,500)
+    triList = []
+    for i in range(0, len(tris[0]) - 2, 3):
+        triList.append(tuple(tris[0][i : i + 3] + tris[1][i : i + 3] + tris[2][i : i + 3]))
+    triList.sort(key=lambda t: sum(t[6:9]))
+    print 'sorted lis'
+    for x1, x2, x3, y1, y2, y3, z1, z2, z3 in triList:
+        nx1, ny1, nz1 = normalize(x1 - 250, y1 - 250, z1)
+        nx2, ny2, nz2 = normalize(x2 - 250, y2 - 250, z2)
+        nx3, ny3, nz3 = normalize(x3 - 250, y3 - 250, z3)
+        shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a)
+        img.setPixels(shadePix)
+    img.display()
 if __name__ == '__main__':
-    sphereshade()
+    sphinput()
     
