@@ -140,13 +140,15 @@ def shader(x,y,z,nx,ny, nz,lx,ly,lz,vx,vy,vz, col, Ia,Id,Is,Ka, Kd, Ks,a):
     Rmy = 2 * Lmn * ny - Lmy
     Rmz = 2 * Lmn * nz - Lmz
     Vx, Vy, Vz = normalize(vx-x,vy-y,vz-z)
+    diff = max(Lmn, 0)
     try:
-        Ip = Ka * Ia + Kd * Lmn * Id + Ks * math.pow(max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0),a) * Is
+        spec = math.pow(max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0),a)
     except:
-        Ip = 1000000000
-    if Ip <= 0:
-        return (0,0,0)
-    return tuple(int(i * Ip) if i * Ip < 256 else 255 for i in col)
+        spec = 1
+    c = [0,0,0]
+    for i in xrange(3):
+        c[i] = min(max(int(Ka[i]*Ia[i] + Kd[i]*Id[i]*diff + Ks[i]*Is[i]*spec),0),65535) / 256
+    return c
 def textureTriMtxs(ms, img, texcache):
     mcols = [[]]*8
     for m, t, texture, col in ms:
@@ -229,12 +231,12 @@ def shadetest():
     nx3, ny3, nz3 = normalize(x3, x3, z3)
     lx, ly, lz = 300, 300, 300
     col = (255, 150, 30)
-    Ia = 0.3
-    Id = 0.5
-    Is = 0.9
-    Ka = 0.3
-    Kd = 0.5
-    Ks = 0.9
+    Ia = (255,150,30)
+    Id = (255,150,30)
+    Is = (255,200,150)
+    Ka = (0,200,100)
+    Kd = (0,200,100)
+    Ks = (255,255,255)
     a = 0.5
     img = Image(500, 500)
     shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,col,Ia,Id,Is,Ka,Kd,Ks,a)
@@ -246,17 +248,17 @@ def sphereshade():
     lx, ly, lz = 700,100,0
     vx, vy, vz = 250, 250, 2000
     col = (255, 150, 30)
-    Ia = 0.8
-    Id = 0.8
-    Is = 0.9
-    Ka = 0.7
-    Kd = 0.6
-    Ks = 0.7
+    Ia = (255,150,30)
+    Id = (255,150,30)
+    Is = (255,200,150)
+    Ka = (0,200,100)
+    Kd = (0,200,100)
+    Ks = (255,255,255)
     a = 20
     
     tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .02)
     sts = edgeMtx.edgemtx()
-    edgeMtx.addCircle(sts,0,0,0,500,.01)
+    edgeMtx.addCircle(sts,0,0,0,500,.05)
     sts = transform.T(250,250,0)*transform.R('x', 90)*sts
     sts = zip(*sts)[::2]
     ke=0
