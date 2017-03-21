@@ -111,18 +111,31 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, b
             pts.append((x, y, bgcol))
     return pts
 
-def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a):
+def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a,zbuf):
     pts = []
     tri = triangle(x1,y1,x2,y2,x3,y3)
     det = float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1\
  - y3))
     for x, y in tri:
+        if not (0 <= x < 500 and 0 <= y < 500):
+            continue
         d1,d2,d3=getBary(x, y, x1, y1, x2, y2, x3, y3, \
 det)
+        z = z1*d1+z2*d2+z3*d3
+        if zbuf[y][x] >= z:
+            if zbuf[y][x] is not None:
+                print 'buf pixf at %f for %f'%(z,zbuf[y][x])
+            continue
+        print 'do pixf at %f over %f'%(z,zbuf[y][x])
+        zbuf[y][x] = z
+        nz = nz1*d1+nz2*d2+nz3*d3
+        # if nz < 0:
+        #    pts.append((x,y,(0,0,0)))
+        #    continue
         nx = nx1*d1+nx2*d2+nx3*d3
         ny = ny1*d1+ny2*d2+ny3*d3
-        nz = nz1*d1+nz2*d2+nz3*d3
-        z = z1*d1+z2*d2+z3*d3
+        
+        
         pts.append((x,y,shader(x,y,z,nx,ny, nz,lx,ly,lz, vx,vy,vz, Ia,Id,Is, Ka, Kd, Ks, a)))
     return pts
 
@@ -287,20 +300,25 @@ def sphinput():
     Ka = Kd = tuple(input('ball color r,g,b: '))
     Ks = 255, 255, 255
     a = int(input('shininess a: '))
-    tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .02)
+    n = 1. / float(input('sphere steps: '))
+    r = float(input('radius: '))
+    cx, cy, cz = tuple(input('center position x,y,z: '))
+    tris = transform.T(cx, cy, cz) * edgeMtx.sphere(r, n)
+    zbuf = [[None] * 500] * 500
     img = Image(500,500)
     triList = []
     for i in range(0, len(tris[0]) - 2, 3):
         triList.append(tuple(tris[0][i : i + 3] + tris[1][i : i + 3] + tris[2][i : i + 3]))
-    triList.sort(key=lambda t: sum(t[6:9]))
+    triList.sort(key=lambda t: -sum(t[6:9]))
     print 'sorted lis'
     for x1, x2, x3, y1, y2, y3, z1, z2, z3 in triList:
-        nx1, ny1, nz1 = normalize(x1 - 250, y1 - 250, z1)
-        nx2, ny2, nz2 = normalize(x2 - 250, y2 - 250, z2)
-        nx3, ny3, nz3 = normalize(x3 - 250, y3 - 250, z3)
-        shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a)
+        nx1, ny1, nz1 = normalize(x1 - cx, y1 - cy, z1 - cz)
+        nx2, ny2, nz2 = normalize(x2 - cx, y2 - cy, z2 - cz)
+        nx3, ny3, nz3 = normalize(x3 - cx, y3 - cy, z3 - cz)
+        shadePix = drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a,zbuf)
         img.setPixels(shadePix)
     img.display()
+    img.saveAs('sph.png')
 if __name__ == '__main__':
     sphinput()
     
