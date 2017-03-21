@@ -88,7 +88,16 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
     except:
         return 1, 0, 0
 
-def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color
+def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, mat): #1-6 vertices, 7-12 tcors, 13 material
+    # TODO: rgb + bgcol -> mat, use mat to get shading stuff and use below code frag
+    '''if 'ambtexture' in mat:
+            rgbAmbient = getTexture(mat['ambtexture'], texcache)
+        else:
+            rgbAmbient = None
+        if 'difftexture' in mat:
+            rgbDiffuse = getTexture(mat['difftexture'], texcache)
+        else:
+            rgbDiffuse = None'''
     a = time()
     pts = []
     l = len(rgb)-1
@@ -117,16 +126,20 @@ def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3
     det = float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1\
  - y3))
     for x, y in tri:
+        #print y, x
         if not (0 <= x < 500 and 0 <= y < 500):
             continue
         d1,d2,d3=getBary(x, y, x1, y1, x2, y2, x3, y3, \
 det)
         z = z1*d1+z2*d2+z3*d3
         if zbuf[y][x] >= z:
-            if zbuf[y][x] is not None:
-                print 'buf pixf at %f for %f'%(z,zbuf[y][x])
+            #print 'buf pixf at %f for %f'%(z,zbuf[y][x])
             continue
-        print 'do pixf at %f over %f'%(z,zbuf[y][x])
+        #else: print 'nein'
+        #if zbuf[y][x] is not None:
+        #    print 'do pixf at %f over %f'%(z,zbuf[y][x])
+        #else:
+        #    print 'new pixel', y, x
         zbuf[y][x] = z
         nz = nz1*d1+nz2*d2+nz3*d3
         # if nz < 0:
@@ -162,33 +175,32 @@ def shader(x,y,z,nx,ny, nz,lx,ly,lz,vx,vy,vz, Ia,Id,Is,Ka, Kd, Ks,a):
     for i in xrange(3):
         c[i] = min(max(int(Ka[i]*Ia[i] + Kd[i]*Id[i]*diff + Ks[i]*Is[i]*spec),0),65535) / 256
     return c
+
+def getTexture(texture, texcache):
+    if texture not in texcache:
+        r = Reader(texture)
+        rgb = list(r.asRGBA()[2])
+        texcache[texture] = rgb
+    return texcache[texture]
+
 def textureTriMtxs(ms, img, texcache):
-    mcols = [[]]*8
-    for m, t, texture, col in ms:
-        if texture is None:
-            rgb = None
-        else:
-            if texture not in texcache:
-                print texture
-                r = Reader(texture)
-                rgb = list(r.asRGBA()[2])
-                texcache[texture] = rgb
-            rgb = texcache[texture]
-        mcol = m + t + [[rgb] * len(m[0])] + [[col] * len(m[0])]
+    mcols = [[]]*7
+    for m, t, mat in ms:
+        mcol = m + t + [[mat] * len(m[0])]
         mcols = edgeMtx.addEdgeMtxs(mcols, mcol)
     triangles = []
     for i in range(0, len(mcols[0]) - 2, 3):
         # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
-        triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i], mcols[7][i]])
+        triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i])  # 14 els long
     ordTris = sorted(triangles, key=lambda l: l[6])
     times = 0
     for t in ordTris:
         a = time()
-        if t[13] is not None:
+        if t[13] is not None:  # todo shading w/ textures
             img.setPixels(drawTexturedTri(*t[:6] + t[7:]))
-        else:
+        else:  # todo shading w/o textures
             tri = triangle(*t[:6])
-            coloredtri = [xy + (t[14],) for xy in tri]
+            coloredtri = [xy + (t[13],) for xy in tri]
             img.setPixels(coloredtri)
         times += time() - a
     print times / 1.0 / len(ordTris) * 1000
@@ -304,7 +316,9 @@ def sphinput():
     r = float(input('radius: '))
     cx, cy, cz = tuple(input('center position x,y,z: '))
     tris = transform.T(cx, cy, cz) * edgeMtx.sphere(r, n)
-    zbuf = [[None] * 500] * 500
+    zbuf = [[None] * 500 for i in xrange(500)]
+    zbuf[250][250] = 1
+    print zbuf[251][250]
     img = Image(500,500)
     triList = []
     for i in range(0, len(tris[0]) - 2, 3):

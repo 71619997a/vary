@@ -9,9 +9,20 @@ def parse(objfile, mtlfile):
             materialNext = line[7:].strip()
         elif line[:4] == '\tKa ':
             color = tuple(int(float(i) * 255) for i in line[4:].strip().split(' '))
-            materials[materialNext] = {'color':color}
+            materials[materialNext]['ambient'] = color
+        elif line[:4] == '\tKd ':
+            color = tuple(int(float(i) * 255) for i in line[4:].strip().split(' '))
+            materials[materialNext]['diffuse'] = color
+        elif line[:4] == '\tKs ':
+            color = tuple(int(float(i) * 255) for i in line[4:].strip().split(' '))
+            materials[materialNext]['spectral'] = color
+        elif line[:4] == '\tNs ':
+            exp = float(line[4:].strip())
+            materials[materialNext] = {'specexp':color}
+        elif line[:8] == '\tmap_Kd ':
+            materials[materialNext]['difftexture'] = line[8:].strip()
         elif line[:8] == '\tmap_Ka ':
-            materials[materialNext]['texture'] = line[8:].strip()
+            materials[materialNext]['ambtexture'] = line[8:].strip()
     vertices = []
     tcors = []
     triangles = []
@@ -35,16 +46,13 @@ def parse(objfile, mtlfile):
         elif line[:7] == 'usemtl ':
             mtl = line[7:].strip()
             mat = materials[mtl]
-            if 'texture' in mat:
-              colors.append((len(triangles), mat['texture'], mat['color']))
-            else:
-              colors.append((len(triangles), None, mat['color']))
+            colors.append((len(triangles), mat))
         elif line[:2] == 'g ':
             obj = line[2:].strip()
     triset = []
     for i in range(len(colors)):
-        start, texture, col = colors[i]
-        triset.append([edgemtx(),[[],[]],texture,col])
+        start, mat = colors[i]
+        triset.append([edgemtx(),[[],[]],mat])
         if i + 1 < len(colors):
             end = colors[i + 1][0]
             thiscol = triangles[start:end]
