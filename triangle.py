@@ -127,40 +127,53 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf):
     pts = []
     if mat.amb.type:
         ambtex = getTexture(mat.amb.texture, texcache)
+        ambw = len(ambtex[0]) / 4
+        ambh = len(ambtex)
     if mat.diff.type:
         difftex = getTexture(mat.diff.texture, texcache)
+        diffw = len(difftex[0]) / 4
+        diffh = len(difftex)
     if mat.spec.type:
         spectex = getTexture(mat.spec.texture, texcache)
+        specw = len(spectex[0]) / 4
+        spech = len(spectex)
     for x, y in tri:
+        #print x,y
         if not (0 <= x < 500 and 0 <= y < 500):
+            #print 'offscreen'
             continue
         d1, d2, d3 = getBary(x, y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, det)
         z = p1.z * d1 + p2.z * d2 + p3.z * d3
         if zbuf[y][x] >= z:
             continue
+        #print 'not buffed'
         zbuf[y][x] = z
-        Ka = mat.amb.color
-        Kd = mat.diff.color
-        Ks = mat.spec.color
+        Ka = mat.amb.col
+        Kd = mat.diff.col
+        Ks = mat.spec.col
         if mat.amb.type or mat.diff.type or mat.spec.type:
-            tcx = tx1*d1+tx2*d2+tx3*d3
-            tcy = ty1*d1+ty2*d2+ty3*d3
+            tcx = p1.tx*d1+p2.tx*d2+p3.tx*d3
+            tcy = p1.ty*d1+p2.ty*d2+p3.ty*d3
             # print tc[0], tc[1]
             if 1>=tcx>=0 and 1>=tcy>=0:
-                xcor = int(tcx*tw)*4
-                ycor = int(tcy*th)
                 # TODO transparency checking
                 if mat.amb.type:
-                    Ka = ambtex[ycor][xcor : xcor + 3]
+                    xcor = int(tcx*ambw)*4
+                    ycor = int(tcy*ambh)
+                    Ka = ambtex[ambh-1-ycor][xcor : xcor + 3]
                 if mat.diff.type:
-                    Kd = difftex[ycor][xcor : xcor + 3]
+                    xcor = int(tcx*diffw)*4
+                    ycor = int(tcy*diffh)
+                    Kd = difftex[diffh-1-ycor][xcor : xcor + 3]
                 if mat.spec.type:
-                    Ks = spectex[ycor][xcor : xcor + 3]
+                    xcor = int(tcx*specw)*4
+                    ycor = int(tcy*spech)
+                    Ks = spectex[spech-1-ycor][xcor : xcor + 3]
         nx = p1.nx * d1 + p2.nx * d2 + p3.nx * d3
         ny = p1.ny * d1 + p2.ny * d2 + p3.ny * d3
         nz = p1.nz * d1 + p2.nz * d2 + p3.nz * d3
         col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
-        pts.append(x, y, col)
+        pts.append((x, y, col))
     return pts
 
 def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a,zbuf):
@@ -202,21 +215,26 @@ def normalize(*v):
         v[i] /= norm
     return v
         
-def shader(x,y,z,nx,ny, nz,lx,ly,lz,vx,vy,vz, Ia,Id,Is,Ka, Kd, Ks,a):
-    Lmx , Lmy, Lmz = normalize(lx-x,ly-y,lz-z)
-    Lmn = Lmx * nx + Lmy * ny + Lmz * nz
-    Rmx = 2 * Lmn * nx - Lmx
-    Rmy = 2 * Lmn * ny - Lmy
-    Rmz = 2 * Lmn * nz - Lmz
+def shader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
     Vx, Vy, Vz = normalize(vx-x,vy-y,vz-z)
-    diff = max(Lmn, 0)
-    try:
-        spec = math.pow(max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0),a)
-    except:
-        spec = 1
     c = [0,0,0]
+    for l in lights:
+        Lmx , Lmy, Lmz = normalize(l.x-x,l.y-y,l.z-z)
+        Lmn = Lmx * nx + Lmy * ny + Lmz * nz
+        Rmx = 2 * Lmn * nx - Lmx
+        Rmy = 2 * Lmn * ny - Lmy
+        Rmz = 2 * Lmn * nz - Lmz    
+        diff = max(Lmn, 0)
+        try:
+            spec = math.pow(max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0),a)
+        except:
+            spec = 1 
+        for i in xrange(3):
+            c[i] += Ka[i]*l.Ia[i] + Kd[i]*l.Id[i]*diff + Ks[i]*l.Is[i]*spec
     for i in xrange(3):
-        c[i] = min(max(int(Ka[i]*Ia[i] + Kd[i]*Id[i]*diff + Ks[i]*Is[i]*spec),0),65535) / 256
+        c[i] = min(int(c[i]), 65535) / 256
+    if tuple(c) == (0,0,0) and tuple(Ka) != (0,0,0):
+        print Ka, Kd, Ks
     return c
 
 def getTexture(texture, texcache):
@@ -253,8 +271,8 @@ def apply(m, tris):
         for i in xrange(3):
             pt = t[i]
             x = dot4xyz(m[0], pt.x, pt.y, pt.z)
-            y = dot4xyz(m[0], pt.x, pt.y, pt.z)
-            z = dot4xyz(m[0], pt.x, pt.y, pt.z)
+            y = dot4xyz(m[1], pt.x, pt.y, pt.z)
+            z = dot4xyz(m[2], pt.x, pt.y, pt.z)
             pt.x = x
             pt.y = y
             pt.z = z
@@ -393,17 +411,23 @@ def sphinput():
     img.saveAs('sph.png')
 
 def marioshadetest():
-    V = (250, 250, 700)
+    img = Image(500, 500)
+    V = [250, 250, 700]
     # TODO implement lights, texcache, zbuf
-    lights = [Light(700, 0, 300, (30, 10, 10), (255, 100, 50), (255, 200, 150)), Light(0, 300, 200, (5, 20, 30), (50, 200, 150), (150, 255, 200))]
+    lights = [Light(700, 0, 300, (30, 20, 20), (255, 100, 50), (255, 200, 150)), Light(0, 300, 200, (5, 20, 30), (50, 200, 150), (150, 255, 200))]
+    texcache = {}
+    zbuf = [[0]*500 for i in xrange(500)]
     chdir('mario')
     tris = obj.parse('mario.obj','mario.mtl')
-    m = transform.T(250,250,0)*transform.S(1.7, 1.7, 1.7)*transform.R('z', 180)
+    m = transform.T(250,400,0)*transform.S(1.7, 1.7, 1.7)*transform.R('z', 180)
     apply(m, tris)
     tris.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
     for tri in tris:
-        renderTriangle(*tri + V + [lights, texcache, zbuf])
+        img.setPixels(renderTriangle(*tri + V + [lights, texcache, zbuf]))
+    chdir('..')
+    img.display()
+    img.saveAs('marshade.png')
     
 if __name__ == '__main__':
-    sphinput()
+    marioshadetest()
     
