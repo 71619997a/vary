@@ -393,12 +393,16 @@ def sphinput():
     img.saveAs('sph.png')
 
 def marioshadetest():
+    V = (250, 250, 700)
+    # TODO implement lights, texcache, zbuf
+    lights = [Light(700, 0, 300, (30, 10, 10), (255, 100, 50), (255, 200, 150)), Light(0, 300, 200, (5, 20, 30), (50, 200, 150), (150, 255, 200))]
     chdir('mario')
     tris = obj.parse('mario.obj','mario.mtl')
-    m = transform.T(250,250,0)*transform.R('z', 180)
+    m = transform.T(250,250,0)*transform.S(1.7, 1.7, 1.7)*transform.R('z', 180)
     apply(m, tris)
-    for tri in tris
-    renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf)
+    tris.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
+    for tri in tris:
+        renderTriangle(*tri + V + [lights, texcache, zbuf])
     
 if __name__ == '__main__':
     sphinput()
