@@ -25,6 +25,7 @@ def parse(objfile, mtlfile):
             materials[materialNext]['ambtexture'] = line[8:].strip()
     vertices = []
     tcors = []
+    norms = []
     triangles = []
     colors = []
     mtl = ''
@@ -36,13 +37,16 @@ def parse(objfile, mtlfile):
             vertices.append(coords)
         elif line[:3] == 'vt ':
             coords = tuple(float(i) for i in line[3:].strip().split(' '))[:2]
-            print coords
             tcors.append(coords)
+        elif line[:3] == 'vn ':
+            coords = tuple(float(i) for i in line[3:].strip().split(' '))
+            norms.append(coords)
         elif line[:2] == 'f ':
             if not obj == 'Hair_Cap':
                 indices = tuple(int(i.split('/')[0]) for i in line[2:].strip().split(' '))
                 tindices = tuple(int(i.split('/')[1]) for i in line[2:].strip().split(' '))
-                triangles.append((indices,tindices))
+                nindices = tuple(int(i.split('/')[2]) for i in line[2:].strip().split(' '))
+                triangles.append((indices,tindices,nindices))
         elif line[:7] == 'usemtl ':
             mtl = line[7:].strip()
             mat = materials[mtl]
@@ -58,11 +62,11 @@ def parse(objfile, mtlfile):
             thiscol = triangles[start:end]
         else:
             thiscol = triangles[start:]
-        for ind, tind in thiscol:
+        for ind, tind, nind in thiscol:
             i,j,k = ind
             x,y,z = tind
-            print x, y, z
-            print tcors[x-1][0]
+            a,b,c = nind
+            # TODO use Point and Material
             addTriangle(triset[-1][0], *vertices[i - 1] + vertices[j - 1] + vertices[k - 1])
             triset[-1][1][0].extend([tcors[x - 1][0], tcors[y - 1][0], tcors[z - 1][0]])
             triset[-1][1][1].extend([tcors[x - 1][1], tcors[y - 1][1], tcors[z - 1][1]])

@@ -9,6 +9,7 @@ from base import Image
 import obj
 import edgeMtx
 import math
+from common import *
 #chdir('/storage/emulated/0/qpython/scripts/gfx-base/gfx-base')
 
 def sortedInds(lst):
@@ -120,6 +121,48 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, mat): 
             pts.append((x, y, bgcol))
     return pts
 
+def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf):
+    tri = triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+    det = float((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y))
+    pts = []
+    if mat.amb.type:
+        ambtex = getTexture(mat.amb.texture, texcache)
+    if mat.diff.type:
+        difftex = getTexture(mat.diff.texture, texcache)
+    if mat.spec.type:
+        spectex = getTexture(mat.spec.texture, texcache)
+    for x, y in tri:
+        if not (0 <= x < 500 and 0 <= y < 500):
+            continue
+        d1, d2, d3 = getBary(x, y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, det)
+        z = p1.z * d1 + p2.z * d2 + p3.z * d3
+        if zbuf[y][x] >= z:
+            continue
+        zbuf[y][x] = z
+        Ka = mat.amb.color
+        Kd = mat.diff.color
+        Ks = mat.spec.color
+        if mat.amb.type or mat.diff.type or mat.spec.type:
+            tcx = tx1*d1+tx2*d2+tx3*d3
+            tcy = ty1*d1+ty2*d2+ty3*d3
+            # print tc[0], tc[1]
+            if 1>=tcx>=0 and 1>=tcy>=0:
+                xcor = int(tcx*tw)*4
+                ycor = int(tcy*th)
+                # TODO transparency checking
+                if mat.amb.type:
+                    Ka = ambtex[ycor][xcor : xcor + 3]
+                if mat.diff.type:
+                    Kd = difftex[ycor][xcor : xcor + 3]
+                if mat.spec.type:
+                    Ks = spectex[ycor][xcor : xcor + 3]
+        nx = p1.nx * d1 + p2.nx * d2 + p3.nx * d3
+        ny = p1.ny * d1 + p2.ny * d2 + p3.ny * d3
+        nz = p1.nz * d1 + p2.nz * d2 + p3.nz * d3
+        col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
+        pts.append(x, y, col)
+    return pts
+
 def drawShadedTri(x1,y1,z1,x2,y2,z2,x3,y3,z3,nx1,ny1,nz1,nx2,ny2,nz2,nx3,ny3,nz3,lx,ly,lz,vx,vy,vz,Ia,Id,Is,Ka,Kd,Ks,a,zbuf):
     pts = []
     tri = triangle(x1,y1,x2,y2,x3,y3)
@@ -183,7 +226,7 @@ def getTexture(texture, texcache):
         texcache[texture] = rgb
     return texcache[texture]
 
-def textureTriMtxs(ms, img, texcache):
+def textureTriMtxs(obj, img, texcache):
     mcols = [[]]*7
     for m, t, mat in ms:
         mcol = m + t + [[mat] * len(m[0])]
@@ -191,7 +234,7 @@ def textureTriMtxs(ms, img, texcache):
     triangles = []
     for i in range(0, len(mcols[0]) - 2, 3):
         # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
-        triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i])  # 14 els long
+        triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i]])  # 14 els long
     ordTris = sorted(triangles, key=lambda l: l[6])
     times = 0
     for t in ordTris:
@@ -333,6 +376,11 @@ def sphinput():
         img.setPixels(shadePix)
     img.display()
     img.saveAs('sph.png')
+
+def marioshadetest():
+    chdir('mario')
+    triset = obj.parse('mario.obj','mario.mtl')
+    renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf)
 if __name__ == '__main__':
     sphinput()
     
