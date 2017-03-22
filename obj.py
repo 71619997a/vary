@@ -9,20 +9,22 @@ def parse(objfile, mtlfile):
             materialNext = line[7:].strip()
         elif line[:4] == '\tKa ':
             color = tuple(int(float(i) * 255) for i in line[4:].strip().split(' '))
-            materials[materialNext]['ambient'] = color
+            materials[materialNext].ambient = Texture(False, color)
         elif line[:4] == '\tKd ':
             color = tuple(int(float(i) * 255) for i in line[4:].strip().split(' '))
-            materials[materialNext]['diffuse'] = color
+            materials[materialNext].diffuse = Texture(False, color)
         elif line[:4] == '\tKs ':
             color = tuple(int(float(i) * 255) for i in line[4:].strip().split(' '))
-            materials[materialNext]['spectral'] = color
+            materials[materialNext].spectral = Texture(False, color)
         elif line[:4] == '\tNs ':
             exp = float(line[4:].strip())
-            materials[materialNext] = {'specexp':color}
+            materials[materialNext] = Material(exp=exp)
         elif line[:8] == '\tmap_Kd ':
-            materials[materialNext]['difftexture'] = line[8:].strip()
+            materials[materialNext].diff.texture = line[8:].strip()
+            materials[materialNext].diff.type = True
         elif line[:8] == '\tmap_Ka ':
-            materials[materialNext]['ambtexture'] = line[8:].strip()
+            materials[materialNext].amb.texture = line[8:].strip()
+            materials[materialNext].amb.type = True
     vertices = []
     tcors = []
     norms = []
@@ -56,18 +58,20 @@ def parse(objfile, mtlfile):
     triset = []
     for i in range(len(colors)):
         start, mat = colors[i]
-        triset.append([edgemtx(),[[],[]],mat])
         if i + 1 < len(colors):
             end = colors[i + 1][0]
             thiscol = triangles[start:end]
         else:
             thiscol = triangles[start:]
         for ind, tind, nind in thiscol:
+            ls = []
             i,j,k = ind
             x,y,z = tind
             a,b,c = nind
             # TODO use Point and Material
-            addTriangle(triset[-1][0], *vertices[i - 1] + vertices[j - 1] + vertices[k - 1])
-            triset[-1][1][0].extend([tcors[x - 1][0], tcors[y - 1][0], tcors[z - 1][0]])
-            triset[-1][1][1].extend([tcors[x - 1][1], tcors[y - 1][1], tcors[z - 1][1]])
+            ls.append(Point(*vertices[i - 1] + norms[a - 1] + tcors[x - 1]))
+            ls.append(Point(*vertices[j - 1] + norms[b - 1] + tcors[y - 1]))
+            ls.append(Point(*vertices[k - 1] + norms[c - 1] + tcors[z - 1]))
+            ls.append(mat)
+            triset.append(ls)
     return triset

@@ -248,6 +248,21 @@ def textureTriMtxs(obj, img, texcache):
         times += time() - a
     print times / 1.0 / len(ordTris) * 1000
 
+def apply(m, tris):
+    for t in tris:
+        for i in xrange(3):
+            pt = t[i]
+            x = dot4xyz(m[0], pt.x, pt.y, pt.z)
+            y = dot4xyz(m[0], pt.x, pt.y, pt.z)
+            z = dot4xyz(m[0], pt.x, pt.y, pt.z)
+            pt.x = x
+            pt.y = y
+            pt.z = z
+
+def dot4xyz(v, x, y, z):
+    return v[0] * x + v[1] * y + v[2] * z + v[3]
+
+
 def textureTest():
     help(Reader)
     r = Reader(file=open('tesx.png'))
@@ -379,8 +394,12 @@ def sphinput():
 
 def marioshadetest():
     chdir('mario')
-    triset = obj.parse('mario.obj','mario.mtl')
+    tris = obj.parse('mario.obj','mario.mtl')
+    m = transform.T(250,250,0)*transform.R('z', 180)
+    apply(m, tris)
+    for tri in tris
     renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf)
+    
 if __name__ == '__main__':
     sphinput()
     
