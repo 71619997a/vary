@@ -3,7 +3,7 @@ from base import Image
 from sys import argv
 
 def intround(x):
-    return int(round(x))
+    return int(x)
 
 def line(x0, y0, x1, y1):
     r = intround

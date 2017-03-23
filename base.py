@@ -11,7 +11,7 @@ rgbStrTable = [str(i) for i in range(256)]
 class Image(object):
         def __init__(self, w, h, pix=None):
                 if pix is None:
-                        self.pixels = [[(0,0,0) for _ in xrange(w)] for __ in xrange(h)]
+                        self.pixels = [[(255,255,255) for _ in xrange(w)] for __ in xrange(h)]
                 else:
                         self.pixels = pix
                 self.width = w

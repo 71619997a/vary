@@ -31,7 +31,7 @@ def topTriangle(yBase, x1Base, x2Base, x1Top, y1Top):
     else:
         border2 = line(x2Base, yBase, x1Top, y1Top)[::-1]
     i1 = i2 = 0
-    for y in range(y1Top, yBase + 1):
+    for y in range(y1Top, yBase):
         while border1[i1][1] != y:
             i1 += 1
         while border2[i2][1] != y:
@@ -277,6 +277,17 @@ def apply(m, tris):
             pt.y = y
             pt.z = z
 
+def applyNorms(m, tris):
+    for t in tris:
+        for i in xrange(3):
+            pt = t[i]
+            nx = dot4xyz(m[0], pt.nx, pt.ny, pt.nz)
+            ny = dot4xyz(m[1], pt.nx, pt.ny, pt.nz)
+            nz = dot4xyz(m[2], pt.nx, pt.ny, pt.nz)
+            pt.nx = nx
+            pt.ny = ny
+            pt.nz = nz
+
 def dot4xyz(v, x, y, z):
     return v[0] * x + v[1] * y + v[2] * z + v[3]
 
@@ -414,16 +425,36 @@ def marioshadetest():
     img = Image(500, 500)
     V = [250, 250, 700]
     # TODO implement lights, texcache, zbuf
-    lights = [Light(700, 0, 300, (30, 20, 20), (255, 100, 50), (255, 200, 150)), Light(0, 300, 200, (5, 20, 30), (50, 200, 150), (150, 255, 200))]
+    lights = [Light(475, 25, 300, (30, 20, 20), (255, 100, 50), (255, 200, 150)), Light(25, 300, 200, (5, 20, 30), (50, 200, 150), (150, 255, 200))]
+    lballs = []
+    sphere = edgeMtx.sphere(20, .1)
+    for l in lights:
+        lightball = transform.T(l.x, l.y, l.z) * sphere
+        lballs.append((lightball, l.Id))
     texcache = {}
-    zbuf = [[0]*500 for i in xrange(500)]
     chdir('mario')
     tris = obj.parse('mario.obj','mario.mtl')
-    m = transform.T(250,400,0)*transform.S(1.7, 1.7, 1.7)*transform.R('z', 180)
+    mrot = transform.R('y', 180)*transform.R('z', 180)
+    m = transform.T(250,380,0)*transform.S(1.2, 1.2, 1.2)*mrot
     apply(m, tris)
-    tris.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
-    for tri in tris:
-        img.setPixels(renderTriangle(*tri + V + [lights, texcache, zbuf]))
+    applyNorms(mrot, tris)
+    mrot = transform.R('y', 5)
+    m = transform.T(250, 380, 0) * mrot * transform.T(-250, -380, 0)
+    for i in range(72):
+        a = time()
+        zbuf = [[None]*500 for j in xrange(500)]
+        img = Image(500, 500)
+        for ball, col in lballs:
+            edgeMtx.drawTriangles(ball, img, col, col, False)
+        tris.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
+        for tri in tris:
+            img.setPixels(renderTriangle(*tri + V + [lights, texcache, zbuf]))
+        
+
+        img.saveAs('../marshade/%d.ppm' % (i))
+        apply(m, tris)
+        applyNorms(mrot, tris)
+        print i, 'in', (time() - a) * 1000, 'ms'
     chdir('..')
     img.display()
     img.saveAs('marshade.png')
