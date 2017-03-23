@@ -43,10 +43,6 @@ def S(a, b, c):
     return mat
 
 
-def relativeScale(oa, ob, oc, sa, sb, sc):
-    return T(oa, ob, oc)*S(sa, sb, sc)*T(-oa, -ob, -oc)
-
-
 def R(axis, t):
     mat = TransMatrix()
     c = cos(t)
@@ -67,6 +63,16 @@ def R(axis, t):
         mat[2][0] = -s
         mat[2][2] = c
     return mat
+
+
+def C(cx, cy, cz, tx, ty, tz, vx, vy, vz):
+    m = R('z', -tz) * R('y', -ty) * R('z', -tz) * T(-cx, -cy, -cz)
+    dt = TransMatrix()
+    dt[3][3] = 0
+    dt[3][2] = 1. / vz
+    dt[1][2] = -1.*vy / vz
+    dt[0][2] = -1.*vx / vz
+    return dt * m
 
 
 def iparse(inp):
