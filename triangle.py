@@ -1,4 +1,4 @@
-from line import line
+from line import lineByY, line
 import transform
 from matrix import multiply
 from os import chdir
@@ -23,42 +23,36 @@ def inOrder(lst, order):
 def topTriangle(yBase, x1Base, x2Base, x1Top, y1Top):
     pts = []
     if x1Base > x1Top:
-        border1 = line(x1Base, yBase, x1Top, y1Top)
+        border1 = lineByY(x1Base, yBase, x1Top, y1Top)
     else:
-        border1 = line(x1Base, yBase, x1Top, y1Top)[::-1]
+        border1 = lineByY(x1Base, yBase, x1Top, y1Top)[::-1]
     if x2Base > x1Top:
-        border2 = line(x2Base, yBase, x1Top, y1Top)
+        border2 = lineByY(x2Base, yBase, x1Top, y1Top)
     else:
-        border2 = line(x2Base, yBase, x1Top, y1Top)[::-1]
-    i1 = i2 = 0
+        border2 = lineByY(x2Base, yBase, x1Top, y1Top)[::-1]
+    i = 0
     for y in range(y1Top, yBase):
-        while border1[i1][1] != y:
-            i1 += 1
-        while border2[i2][1] != y:
-            i2 += 1
-        for x in range(border1[i1][0], border2[i2][0] + 1):
+        for x in range(border1[i][0], border2[i][0]+1):
             pts.append((x, y))
-    return pts
+        i += 1
+    return pts + border1 + border2
 
 def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
     pts = []
     if x1Base > x1Bot:
-        border1 = line(x1Base, yBase, x1Bot, y1Bot)[::-1]
+        border1 = lineByY(x1Base, yBase, x1Bot, y1Bot)[::-1]
     else:
-        border1 = line(x1Base, yBase, x1Bot, y1Bot)
+        border1 = lineByY(x1Base, yBase, x1Bot, y1Bot)
     if x2Base > x1Bot:
-        border2 = line(x2Base, yBase, x1Bot, y1Bot)[::-1]
+        border2 = lineByY(x2Base, yBase, x1Bot, y1Bot)[::-1]
     else:
-        border2 = line(x2Base, yBase, x1Bot, y1Bot)
-    i1 = i2 = 0
+        border2 = lineByY(x2Base, yBase, x1Bot, y1Bot)
+    i = 0
     for y in range(yBase, y1Bot + 1):
-        while border1[i1][1] != y:
-            i1 += 1
-        while border2[i2][1] != y:
-            i2 += 1
-        for x in range(border1[i1][0], border2[i2][0] + 1):
+        for x in range(border1[i][0], border2[i][0]+1):
             pts.append((x, y))
-    return pts
+        i += 1
+    return pts + border1 + border2
 
 def baseTriangle(yb, xb1, xb2, xp, yp):
     yb, xb1, xb2, xp, yp = int(yb), int(xb1), int(xb2), int(xp), int(yp)
@@ -226,7 +220,7 @@ def shader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
         Rmz = 2 * Lmn * nz - Lmz    
         diff = max(Lmn, 0)
         try:
-            spec = math.pow(max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0),a)
+            spec = max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0)**a
         except:
             spec = 1 
         for i in xrange(3):
@@ -425,21 +419,26 @@ def marioshadetest():
     img = Image(500, 500)
     V = [250, 250, 700]
     # TODO implement lights, texcache, zbuf
-    lights = [Light(475, 25, 300, (30, 20, 20), (255, 100, 50), (255, 200, 150)), Light(25, 300, 200, (5, 20, 30), (50, 200, 150), (150, 255, 200))]
+    lights = [Light(409.1, 409.1, 0, (30, 10, 10), (200, 50, 50), (255, 150, 150)), 
+        Light(25, 250, 50, (5, 30, 10), (50, 200, 50), (150, 255, 150)),
+        Light(250, 25, 100, (10, 20, 30), (50, 50, 200), (150, 150, 255))]
     lballs = []
     sphere = edgeMtx.sphere(20, .1)
     for l in lights:
         lightball = transform.T(l.x, l.y, l.z) * sphere
-        lballs.append((lightball, l.Id))
+        lballs.append([lightball, l.Id])
     texcache = {}
     chdir('mario')
     tris = obj.parse('mario.obj','mario.mtl')
-    mrot = transform.R('y', 180)*transform.R('z', 180)
+    mrot = transform.R('z', 180)
     m = transform.T(250,380,0)*transform.S(1.2, 1.2, 1.2)*mrot
     apply(m, tris)
     applyNorms(mrot, tris)
-    mrot = transform.R('y', 5)
-    m = transform.T(250, 380, 0) * mrot * transform.T(-250, -380, 0)
+    # ROTATE MARIO
+    # mrot = transform.R('y', 5)
+    # m = transform.T(250, 380, 0) * mrot * transform.T(-250, -380, 0)
+    # ROTATE LIGHTS
+    m = transform.T(250, 250, 0) * transform.R('z', 5) * transform.T(-250, -250, 0)
     for i in range(72):
         a = time()
         zbuf = [[None]*500 for j in xrange(500)]
@@ -452,8 +451,19 @@ def marioshadetest():
         
 
         img.saveAs('../marshade/%d.ppm' % (i))
-        apply(m, tris)
-        applyNorms(mrot, tris)
+        # ROTATE MARIO
+        # apply(m, tris)
+        # applyNorms(mrot, tris)
+        # ROTATE LIGHTS
+        for ball in lballs:
+            ball[0] = m * ball[0]
+        for l in lights:
+            x = dot4xyz(m[0], l.x, l.y, l.z)
+            y = dot4xyz(m[1], l.x, l.y, l.z)
+            z = dot4xyz(m[2], l.x, l.y, l.z)
+            l.x = x
+            l.y = y
+            l.z = z
         print i, 'in', (time() - a) * 1000, 'ms'
     chdir('..')
     img.display()
