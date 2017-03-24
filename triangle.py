@@ -457,9 +457,9 @@ def marioshadetest():
     lights = [Light(409.1, 409.1, 0, (30, 10, 10), (200, 50, 50), (255, 150, 150)), 
         Light(25, 250, 50, (5, 30, 10), (50, 200, 50), (150, 255, 150)),
         Light(250, 25, 100, (10, 20, 30), (50, 50, 200), (150, 150, 255))]
-    fov = 45
-    cam = Camera(250, 250, 700, 90, 0, 180, 0, 0, 1 / math.tan(fov / 2.))
-    camT = transform.C(cam)
+    fov = 160
+    cam = Camera(250, 250, 120, 90, 0, 0, -250,-250, 1 / math.tan(fov / 2.))
+    camT = transform.S(250,250,250)*transform.T(1,1,1)*matrix.transpose(transform.C2(cam, 1, -1))
     print matrix.toStr(camT)
     lballs = []
     sphere = edgeMtx.sphere(20, .1)
@@ -469,7 +469,7 @@ def marioshadetest():
     texcache = {}
     chdir('mario')
     tris = obj.parse('mario.obj','mario.mtl')
-    mrot = transform.R('z', 180)
+    mrot = transform.R('z', 180)*transform.R('y', 180)
     m = transform.T(250,380,0)*transform.S(1.2, 1.2, 1.2)*mrot
     apply(m, tris)
     applyNorms(mrot, tris)
@@ -487,15 +487,16 @@ def marioshadetest():
         tricam = appliedHomogeneousTrans(camT, tris)
         tricam.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
         for tri in tricam:
-            for j in xrange(3):
-                pt = tri[j]
-                pt.x += cam.x
-                pt.y += cam.y
-                pt.z += cam.z
+            #for j in xrange(3):
+            #    pt = tri[j]
+            #    pt.x += cam.x
+            #    pt.y += cam.y
+            #    pt.z += cam.z
             img.setPixels(renderTriangle(*tri + [cam.vx, cam.vy, cam.vz, lights, texcache, zbuf]))
         if i == 0:
             img.display()
-        img.saveAs('../marshade/%d.ppm' % (i))
+            img.saveAs('proj.png')
+        img.savePpm('../marshade/%d.ppm' % (i))
         # ROTATE MARIO
         # apply(m, tris)
         # applyNorms(mrot, tris)

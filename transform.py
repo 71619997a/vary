@@ -103,7 +103,7 @@ if __name__ == '__main__':  # parser
     edges = edgemtx()
     trans = TransMatrix()
     frc = 0
-    cam = Camera(250, 250, 700, 90, 0, 0, 0, 0, 250)
+    cam = Camera(250, 250, 700, 90, 0, 0, -250, -250, 250)
     while(True):
         try:
             inp = raw_input('')
@@ -135,7 +135,7 @@ if __name__ == '__main__':  # parser
         elif inp == 'save':
             inp = raw_input('').strip()
             img = Image(500, 500)
-            drawEdges(edges, img)
+            drawEdges(projected(edges, cam), img)
             if inp[-4:] == '.ppm':
                 img.flipUD().savePpm(inp)
             else:
@@ -143,7 +143,7 @@ if __name__ == '__main__':  # parser
         elif inp == 'saveframe':
             inp = raw_input('').strip()
             img = Image(500, 500)
-            drawEdges(edges, img)
+            drawEdges(projected(edges, cam), img)
             img.flipUD().savePpm('%s%d.ppm' % (inp, frc))
             frc += 1
         elif inp == 'circle':
