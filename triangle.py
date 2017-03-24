@@ -1,4 +1,4 @@
-from line import lineByY, line
+1from line import lineByY, line
 import transform
 from matrix import multiply
 import matrix
@@ -270,9 +270,9 @@ def appliedHomogeneousTrans(m, tris):
             pt = tri[i]
             new = newtri[i]
             fac = dot4xyz(m[3], pt.x, pt.y, pt.z)
-            x = dot4xyz(m[0], pt.x, pt.y, pt.z) / fac * 500
-            y = dot4xyz(m[1], pt.x, pt.y, pt.z) / fac * 500
-            z = dot4xyz(m[2], pt.x, pt.y, pt.z) / fac * 500
+            x = dot4xyz(m[0], pt.x, pt.y, pt.z) / fac# * 500
+            y = dot4xyz(m[1], pt.x, pt.y, pt.z) / fac# * 500
+            z = dot4xyz(m[2], pt.x, pt.y, pt.z) / fac# * 500
             new.x = x
             new.y = y
             new.z = z
@@ -293,6 +293,7 @@ def applied(m, tris):
             new.x = x
             new.y = y
             new.z = z
+            print x,y,z
     return newtris
 
 
@@ -457,9 +458,9 @@ def marioshadetest():
     lights = [Light(409.1, 409.1, 0, (30, 10, 10), (200, 50, 50), (255, 150, 150)), 
         Light(25, 250, 50, (5, 30, 10), (50, 200, 50), (150, 255, 150)),
         Light(250, 25, 100, (10, 20, 30), (50, 50, 200), (150, 150, 255))]
-    fov = 160
-    cam = Camera(250, 250, 120, 90, 0, 0, -250,-250, 1 / math.tan(fov / 2.))
-    camT = transform.S(250,250,250)*transform.T(1,1,1)*matrix.transpose(transform.C2(cam, 1, -1))
+    fov = 90
+    cam = Camera(250, 250, 200, 0, 0, 0, -250,-250, 1 / math.tan(fov / 2.))
+    camT = transform.T(cam.x,cam.y,cam.z)*transform.C2(cam, 500, -500)
     print matrix.toStr(camT)
     lballs = []
     sphere = edgeMtx.sphere(20, .1)
@@ -484,7 +485,7 @@ def marioshadetest():
         img = Image(500, 500)
         for ball, col in lballs:
             edgeMtx.drawTriangles(ball, img, col, col, False)
-        tricam = appliedHomogeneousTrans(camT, tris)
+        tricam = applied(camT, tris)
         tricam.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
         for tri in tricam:
             #for j in xrange(3):

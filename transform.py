@@ -80,10 +80,11 @@ def C2(cam, near, far):
     dt = TransMatrix()
     dt[0][0] = cam.vz
     dt[1][1] = cam.vz
-    dt[2][3] = -1
+    dt[3][2] = -1
     dt[3][3] = 0
     dt[2][2] = -1.*far / (far - near)
     dt[3][2] = -1.*far * near / (far - near)
+    print dt * m
     return dt * m
 def projected(m, cam):
     mp = C(cam) * m
