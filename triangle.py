@@ -276,7 +276,7 @@ def appliedHomogeneousTrans(m, tris):
             new.x = x
             new.y = y
             new.z = z
-            # print new.x, new.y, new.z
+            print new.x, new.y, new.z
     return newtris
 
 def applied(m, tris):
@@ -484,13 +484,14 @@ def marioshadetest():
         img = Image(500, 500)
         for ball, col in lballs:
             edgeMtx.drawTriangles(ball, img, col, col, False)
-        tris.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
-        for tri in tris: #appliedHomogeneousTrans(camT, tris):
-            # for j in xrange(3):
-            #     pt = tri[j]
-            #     pt.x += cam.x
-            #     pt.y += cam.y
-            #     pt.z += cam.z
+        tricam = appliedHomogeneousTrans(camT, tris)
+        tricam.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
+        for tri in tricam:
+            for j in xrange(3):
+                pt = tri[j]
+                pt.x += cam.x
+                pt.y += cam.y
+                pt.z += cam.z
             img.setPixels(renderTriangle(*tri + [cam.vx, cam.vy, cam.vz, lights, texcache, zbuf]))
         if i == 0:
             img.display()

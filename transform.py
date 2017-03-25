@@ -75,7 +75,16 @@ def C(cam):
     dt[0][2] = -1.*cam.vx / cam.vz
     return dt * m
 
-
+def C2(cam, near, far):
+    m = R('z', -cam.dz) * R('y', -cam.dy) * R('z', -cam.dz) * T(-cam.x, -cam.y, -cam.z)
+    dt = TransMatrix()
+    dt[0][0] = cam.vz
+    dt[1][1] = cam.vz
+    dt[2][3] = -1
+    dt[3][3] = 0
+    dt[2][2] = -1.*far / (far - near)
+    dt[3][2] = -1.*far * near / (far - near)
+    return dt * m
 def projected(m, cam):
     mp = C(cam) * m
     for i in xrange(len(mp[0])):
