@@ -71,10 +71,8 @@ def parse(objfile, mtlfile):
             x,y,z = tind
             a,b,c = nind
             # TODO use Point and Material
-            print vertices[i - 1]
             p = Point(*vertices[i - 1] + norms[\
 a - 1] + tcors[x - 1])
-            print p.x, p.y, p.z, p.nx, p.ny, p.nz, p.tx, p.ty
             ls.append(Point(*vertices[i - 1] + norms[a - 1] + tcors[x - 1]))
             ls.append(Point(*vertices[j - 1] + norms[b - 1] + tcors[y - 1]))
             ls.append(Point(*vertices[k - 1] + norms[c - 1] + tcors[z - 1]))

@@ -1,6 +1,7 @@
 from line import lineByY, line
 import transform
 from matrix import multiply
+import matrix
 from os import chdir
 from multiprocessing import Pool
 from png import Reader
@@ -197,8 +198,6 @@ det)
         #    continue
         nx = nx1*d1+nx2*d2+nx3*d3
         ny = ny1*d1+ny2*d2+ny3*d3
-        
-        
         pts.append((x,y,shader(x,y,z,nx,ny, nz,lx,ly,lz, vx,vy,vz, Ia,Id,Is, Ka, Kd, Ks, a)))
     return pts
 
@@ -227,8 +226,6 @@ def shader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
             c[i] += Ka[i]*l.Ia[i] + Kd[i]*l.Id[i]*diff + Ks[i]*l.Is[i]*spec
     for i in xrange(3):
         c[i] = min(int(c[i]), 65535) / 256
-    if tuple(c) == (0,0,0) and tuple(Ka) != (0,0,0):
-        print Ka, Kd, Ks
     return c
 
 def getTexture(texture, texcache):
@@ -259,6 +256,45 @@ def textureTriMtxs(obj, img, texcache):
             img.setPixels(coloredtri)
         times += time() - a
     print times / 1.0 / len(ordTris) * 1000
+
+def copyPoint(pt):
+    return Point(pt.x, pt.y, pt.z, pt.nx, pt.ny, pt.nz, pt.tx, pt.ty)
+
+
+def appliedHomogeneousTrans(m, tris):
+    newtris = [[copyPoint(i[0]), copyPoint(i[1]), copyPoint(i[2]), i[3]] for i in tris]
+    for j in range(len(tris)):
+        tri = tris[j]
+        newtri = newtris[j]
+        for i in xrange(3):
+            pt = tri[i]
+            new = newtri[i]
+            fac = dot4xyz(m[3], pt.x, pt.y, pt.z)
+            x = dot4xyz(m[0], pt.x, pt.y, pt.z) / fac * 500
+            y = dot4xyz(m[1], pt.x, pt.y, pt.z) / fac * 500
+            z = dot4xyz(m[2], pt.x, pt.y, pt.z) / fac * 500
+            new.x = x
+            new.y = y
+            new.z = z
+            # print new.x, new.y, new.z
+    return newtris
+
+def applied(m, tris):
+    newtris = [[copyPoint(i[0]), copyPoint(i[1]), copyPoint(i[2]), i[3]] for i in tris]
+    for j in range(len(tris)):
+        tri = tris[j]
+        newtri = newtris[j]
+        for i in xrange(3):
+            pt = tri[i]
+            new = newtri[i]
+            x = dot4xyz(m[0], pt.x, pt.y, pt.z)
+            y = dot4xyz(m[1], pt.x, pt.y, pt.z)
+            z = dot4xyz(m[2], pt.x, pt.y, pt.z)
+            new.x = x
+            new.y = y
+            new.z = z
+    return newtris
+
 
 def apply(m, tris):
     for t in tris:
@@ -417,11 +453,14 @@ def sphinput():
 
 def marioshadetest():
     img = Image(500, 500)
-    V = [250, 250, 700]
     # TODO implement lights, texcache, zbuf
     lights = [Light(409.1, 409.1, 0, (30, 10, 10), (200, 50, 50), (255, 150, 150)), 
         Light(25, 250, 50, (5, 30, 10), (50, 200, 50), (150, 255, 150)),
         Light(250, 25, 100, (10, 20, 30), (50, 50, 200), (150, 150, 255))]
+    fov = 45
+    cam = Camera(250, 250, 700, 90, 0, 180, 0, 0, 1 / math.tan(fov / 2.))
+    camT = transform.C(cam)
+    print matrix.toStr(camT)
     lballs = []
     sphere = edgeMtx.sphere(20, .1)
     for l in lights:
@@ -446,10 +485,15 @@ def marioshadetest():
         for ball, col in lballs:
             edgeMtx.drawTriangles(ball, img, col, col, False)
         tris.sort(key=lambda tri: -tri[0].z - tri[1].z - tri[2].z)
-        for tri in tris:
-            img.setPixels(renderTriangle(*tri + V + [lights, texcache, zbuf]))
-        
-
+        for tri in tris: #appliedHomogeneousTrans(camT, tris):
+            # for j in xrange(3):
+            #     pt = tri[j]
+            #     pt.x += cam.x
+            #     pt.y += cam.y
+            #     pt.z += cam.z
+            img.setPixels(renderTriangle(*tri + [cam.vx, cam.vy, cam.vz, lights, texcache, zbuf]))
+        if i == 0:
+            img.display()
         img.saveAs('../marshade/%d.ppm' % (i))
         # ROTATE MARIO
         # apply(m, tris)

@@ -1,5 +1,6 @@
 import matrix
 import math
+from common import *
 
 sin = lambda t: math.sin(t * math.pi / 180)
 cos = lambda t: math.cos(t * math.pi / 180)
@@ -65,14 +66,23 @@ def R(axis, t):
     return mat
 
 
-def C(cx, cy, cz, tx, ty, tz, vx, vy, vz):
-    m = R('z', -tz) * R('y', -ty) * R('z', -tz) * T(-cx, -cy, -cz)
+def C(cam):
+    m = R('z', -cam.dz) * R('y', -cam.dy) * R('z', -cam.dz) * T(-cam.x, -cam.y, -cam.z)
     dt = TransMatrix()
     dt[3][3] = 0
-    dt[3][2] = 1. / vz
-    dt[1][2] = -1.*vy / vz
-    dt[0][2] = -1.*vx / vz
+    dt[3][2] = 1. / cam.vz
+    dt[1][2] = -1.*cam.vy / cam.vz
+    dt[0][2] = -1.*cam.vx / cam.vz
     return dt * m
+
+
+def projected(m, cam):
+    mp = C(cam) * m
+    for i in xrange(len(mp[0])):
+        for j in xrange(4):
+            mp[j][i] /= mp[3][i]
+    print mp
+    return mp
 
 
 def iparse(inp):
@@ -84,6 +94,7 @@ if __name__ == '__main__':  # parser
     edges = edgemtx()
     trans = TransMatrix()
     frc = 0
+    cam = Camera(250, 250, 700, 90, 0, 0, 0, 0, 250)
     while(True):
         try:
             inp = raw_input('')
@@ -105,10 +116,12 @@ if __name__ == '__main__':  # parser
             axis, t = (i.strip() for i in inp.split(' '))
             trans = R(axis.lower(), float(t)) * trans
         elif inp == 'apply':
+            print edges
             edges = trans * edges
+            print edges
         elif inp == 'display':
             img = Image(500, 500)
-            drawEdges(edges, img)
+            drawEdges(projected(edges, cam), img)
             img.flipUD().display()
         elif inp == 'save':
             inp = raw_input('').strip()
