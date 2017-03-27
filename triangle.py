@@ -523,13 +523,17 @@ def triIter(m):
     
 def camtest():
     import shape
-    fov = 120
-    cam = Camera(250,250,400,0,0,0,-250,-250,1 / math.tan(fov / 2.))
+    fov = 160
+    cam = Camera(250,250,150,90,0,180,-250,-250,1 / math.tan(fov / 2.))
+    camT = transform.C2(cam, 200, -200)
     v = [cam.x, cam.y, cam.z]
-    lights = [Light(500,0,500,(50,50,50),(200,200,200),(255,255,255))]
-    tris, norms = shape.box(200,200,-100,300,300,100)
+    lights = [Light(500,0,500,(20,20,20),(200,200,200),(255,255,255)),
+              Light(500,500,200,(20,20,20),(200,200,200),(255,255,255)),
+              Light(0,250,500,(20,20,20),(200,200,200),(255,255,255))
+    ]
+    tris, norms = shape.box(200,200,-100,100,100,200)
     print list(triIter(tris))
-    trot = transform.R('y',12)*transform.R('x', 12)
+    trot = transform.R('y',5)
     tmat = transform.T(250,250,0)*trot*transform.T(-250,-250,0)
     tris = tmat*tmat*tmat*tris
     norms= trot*trot*trot*norms
@@ -538,10 +542,17 @@ def camtest():
     diff = Texture(False, [255,0,0])
     spec = Texture(False, [255,150,150])
     mat = Material(amb, diff, spec, 10)
-    for i in range(30):
+    for i in range(72):
+        tricam = camT * tris
+        tricam[3] = [1.] * len(tricam[3])
+        tricam = transform.T(*v) * tricam
+        print 'trans done'
+        a = time()
         zbuf = [[None]*500 for _ in range(500)]
         img = Image(500,500)
-        trit = list(triIter(tris))
+        trit = list(triIter(tricam))
+        print trit
+        trit.sort(key=lambda tri: -tri[0][2] - tri[1][2] - tri[2][2])
         normt = matrix.transpose(norms[:3])
         print len(trit), len(normt)
         for j in range(len(trit)):
@@ -554,7 +565,7 @@ def camtest():
         img.savePpm('cube/%d.ppm'%(i))
         tris = tmat * tris
         norms = trot * norms
-        print i
+        print i, (time() - a) * 1000, 'ms'
 if __name__ == '__main__':
     camtest()
     
