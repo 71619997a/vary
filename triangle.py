@@ -1,4 +1,4 @@
-1from line import lineByY, line
+from line import lineByY, line
 import transform
 from matrix import multiply
 import matrix
@@ -11,6 +11,7 @@ import obj
 import edgeMtx
 import math
 from common import *
+
 #chdir('/storage/emulated/0/qpython/scripts/gfx-base/gfx-base')
 
 def sortedInds(lst):
@@ -515,7 +516,45 @@ def marioshadetest():
     chdir('..')
     img.display()
     img.saveAs('marshade.png')
+
+def triIter(m):
+    for i in range(0, len(m[0]), 3):
+        yield matrix.transpose([m[j][i:i+3] for j in xrange(3)])
     
+def camtest():
+    import shape
+    fov = 120
+    cam = Camera(250,250,400,0,0,0,-250,-250,1 / math.tan(fov / 2.))
+    v = [cam.x, cam.y, cam.z]
+    lights = [Light(500,0,500,(50,50,50),(200,200,200),(255,255,255))]
+    tris, norms = shape.box(200,200,-100,300,300,100)
+    print list(triIter(tris))
+    trot = transform.R('y',12)*transform.R('x', 12)
+    tmat = transform.T(250,250,0)*trot*transform.T(-250,-250,0)
+    tris = tmat*tmat*tmat*tris
+    norms= trot*trot*trot*norms
+    
+    amb = Texture(False, [255,0,0])
+    diff = Texture(False, [255,0,0])
+    spec = Texture(False, [255,150,150])
+    mat = Material(amb, diff, spec, 10)
+    for i in range(30):
+        zbuf = [[None]*500 for _ in range(500)]
+        img = Image(500,500)
+        trit = list(triIter(tris))
+        normt = matrix.transpose(norms[:3])
+        print len(trit), len(normt)
+        for j in range(len(trit)):
+            # (p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf):
+            t = trit[j]
+            ps = []
+            for pt in t:
+                ps.append(Point(*pt + normt[j] + [0,0]))
+            img.setPixels(renderTriangle(*ps + [mat] + v + [lights, {}, zbuf]))
+        img.savePpm('cube/%d.ppm'%(i))
+        tris = tmat * tris
+        norms = trot * norms
+        print i
 if __name__ == '__main__':
-    marioshadetest()
+    camtest()
     
