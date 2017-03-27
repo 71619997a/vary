@@ -95,6 +95,17 @@ def projected(m, cam):
     return mp
 
 
+def C3(r,t,n,f):
+    mat = TransMatrix()
+    mat[0][0] = 1.*n/r
+    mat[1][1] = 1.*n/t
+    mat[2][2] = -1.*(f+n)/(f-n)
+    mat[2][3] = -2.*(f*n)/(f-n)
+    mat[3][3] = 0
+    mat[3][2] = -1
+    return mat
+
+
 def iparse(inp):
     return [float(i.strip()) for i in inp.split(' ')]
 

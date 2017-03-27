@@ -519,13 +519,21 @@ def marioshadetest():
 
 def triIter(m):
     for i in range(0, len(m[0]), 3):
-        yield matrix.transpose([m[j][i:i+3] for j in xrange(3)])
+        t = matrix.transpose([m[j][i:i+3] for j in xrange(3)])
+        x = 0
+        for j in t:
+            for k in range(len(j)):
+                j[k] *= 1./m[3][i + x]
+            x += 1
+        yield t
+        
     
 def camtest():
     import shape
-    fov = 160
-    cam = Camera(250,250,150,90,0,180,-250,-250,1 / math.tan(fov / 2.))
-    camT = transform.C2(cam, 200, -200)
+    fov = 100
+    cam = Camera(0.5,0.5,0.8,0,0,0,0,0,1 / math.tan(fov / 2.))
+    camT = transform.T(250,250,0)*transform.S(250,250,1)*transform.C3(75,75,-50,-340)*transform.T(-250, -250,-175)
+    print camT
     v = [cam.x, cam.y, cam.z]
     lights = [Light(500,0,500,(20,20,20),(200,200,200),(255,255,255)),
               Light(500,500,200,(20,20,20),(200,200,200),(255,255,255)),
@@ -543,7 +551,9 @@ def camtest():
     spec = Texture(False, [255,150,150])
     mat = Material(amb, diff, spec, 10)
     for i in range(72):
+        print tris
         tricam = camT * tris
+        print tricam
         tricam[3] = [1.] * len(tricam[3])
         tricam = transform.T(*v) * tricam
         print 'trans done'
@@ -551,7 +561,7 @@ def camtest():
         zbuf = [[None]*500 for _ in range(500)]
         img = Image(500,500)
         trit = list(triIter(tricam))
-        print trit
+        #print trit,tricam
         trit.sort(key=lambda tri: -tri[0][2] - tri[1][2] - tri[2][2])
         normt = matrix.transpose(norms[:3])
         print len(trit), len(normt)
