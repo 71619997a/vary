@@ -47,6 +47,7 @@ def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
         border1 = lineByY(x1Base, yBase, x1Bot, y1Bot)
     if x2Base > x1Bot:
         border2 = lineByY(x2Base, yBase, x1Bot, y1Bot)[::-1]
+
     else:
         border2 = lineByY(x2Base, yBase, x1Bot, y1Bot)
     i = 0
@@ -112,7 +113,7 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, mat): 
             ycor = int(tcy*th)
             if rgb[l-ycor][xcor + 3] == 255:
                 shade = shader(d1,d2,d3,n1x,n1y,n2x,n2y,n3x,n3y,col,Ka,Kd,Ks)
-                pts.append((x, y, rgb[l-ycor][xcor:xcor+3]))
+                pts.append((x, y, rgb[l-ycor][xcor:xc    or+3]))
         else:
             pts.append((x, y, bgcol))
     return pts
@@ -396,7 +397,7 @@ def sphereshade():
     Is = (255, 150, 150)
     Ks = (128, 128, 128)
 
-    zbuf = [[None for _ in xrange(500)] for _ in xrange(500)]
+    zbuf = [[None for _ in xrange(500)] for _ in ge(500)]
     tris = transform.T(250, 250, 0) * edgeMtx.sphere(200, .02)
     sts = edgeMtx.edgemtx()
     edgeMtx.addCircle(sts,0,0,0,500,.05)
@@ -523,7 +524,7 @@ def triIter(m):
         x = 0
         for j in t:
             for k in range(len(j)):
-                j[k] *= 1./m[3][i + x]
+                j[k] *= 250./m[3][i + x]
             x += 1
         yield t
         
@@ -532,7 +533,7 @@ def camtest():
     import shape
     fov = 100
     cam = Camera(0.5,0.5,0.8,0,0,0,0,0,1 / math.tan(fov / 2.))
-    camT = transform.C3(75,75,-50,-340)*transform.T(-250, -250,-175)
+    camT = transform.C3(75,75,-60,-300)*transform.T(-250, -250,-175)
     print camT
     v = [cam.x, cam.y, cam.z]
     lights = [Light(500,0,500,(20,20,20),(200,200,200),(255,255,255)),
@@ -554,8 +555,8 @@ def camtest():
         print tris
         tricam = camT * tris
         print tricam
-        tricam[3] = [1.] * len(tricam[3])
-        tricam = transform.T(*v) * tricam
+        #tricam[3] = [1.] * len(tricam[3])
+        #tricam = transform.T(*v) * tricam
         print 'trans done'
         a = time()
         zbuf = [[None]*500 for _ in range(500)]
@@ -570,8 +571,17 @@ def camtest():
             t = trit[j]
             ps = []
             for pt in t:
+                pt[0]+=250
+                pt[1]+=250
+                pt[2]+=0
+                print pt
                 ps.append(Point(*pt + normt[j] + [0,0]))
             img.setPixels(renderTriangle(*ps + [mat] + v + [lights, {}, zbuf]))
+        #for t in trit:
+        #    l = line(*t[0][:2]+t[1][:2])
+        #    l += line(*t[0][:2]+t[2][:2])
+        #    l += line(*t[2][:2]+t[1][:2])
+        #    img.setPixels([p + ((0,255,0),) for p in l])
         img.savePpm('cube/%d.ppm'%(i))
         tris = tmat * tris
         norms = trot * norms
