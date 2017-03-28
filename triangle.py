@@ -532,7 +532,7 @@ def camtest():
     import shape
     fov = 100
     cam = Camera(0.5,0.5,0.8,0,0,0,0,0,1 / math.tan(fov / 2.))
-    camT = transform.T(250,250,0)*transform.S(250,250,1)*transform.C3(75,75,-50,-340)*transform.T(-250, -250,-175)
+    camT = transform.C3(75,75,-50,-340)*transform.T(-250, -250,-175)
     print camT
     v = [cam.x, cam.y, cam.z]
     lights = [Light(500,0,500,(20,20,20),(200,200,200),(255,255,255)),
