@@ -105,6 +105,31 @@ def C3(r,t,n,f):
     mat[3][2] = -1
     return mat
 
+def C3invT(r, t, n, f):
+    mat = TransMatrix()
+    mat[0][0] = 1.*r/n
+    mat[1][1] = 1.*t/n
+    mat[2][2] = 0
+    mat[2][3] = 1.*(n-f)/(2*f*n)
+    mat[3][2] = -1
+    mat[3][3] = 1.*(f+n)/(2*f*n)
+    return mat
+
+'''
+A = 
+n/r 0   0   0
+0 n/t   0   0
+0   0 -(f+n)/(f-n) -2fn/(f-n)
+0   0  -1   0
+A'A = I
+A' = 
+r/n 0   ?
+0 t/n   ?
+0   0   ?   
+0   0   ?   ?
+'''
+
+
 
 def iparse(inp):
     return [float(i.strip()) for i in inp.split(' ')]
