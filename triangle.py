@@ -533,28 +533,44 @@ def camtest():
     import shape
     fov = 100
     cam = Camera(0.5,0.5,0.8,0,0,0,0,0,1 / math.tan(fov / 2.))
-    camT = transform.C3(75,75,-60,-300)*transform.T(-250, -250,-175)
+    camargs = [100,100,-50,-300]
+    camT = transform.C3(*camargs)*transform.T(-250, -250,-175)
     print camT
-    v = [cam.x, cam.y, cam.z]
+    ncamT = transform.C3invT(*camargs)
+    print ncamT
+    v = [250,250,1000]
     lights = [Light(500,0,500,(20,20,20),(200,200,200),(255,255,255)),
               Light(500,500,200,(20,20,20),(200,200,200),(255,255,255)),
               Light(0,250,500,(20,20,20),(200,200,200),(255,255,255))
     ]
+    camlights = []
+    for l in lights:
+        x = dot4xyz(camT[0], l.x, l.y, l.z)
+        y = dot4xyz(camT[1], l.x, l.y, l.z)
+        z = dot4xyz(camT[2], l.x, l.y, l.z)
+        w = dot4xyz(camT[3], l.x, l.y, l.z)*1.
+        print x/w*250,y/w*250,z/w*250
+        camlights.append(Light(x/w*250, y/w*250, z/w*250,l.Ia,l.Id,l.Is))
     tris, norms = shape.box(200,200,-100,100,100,200)
+    print norms
+    print ncamT * norms
     print list(triIter(tris))
     trot = transform.R('y',5)
+    nrot = transform.TransMatrix()
+    nrot.lst = matrix.transpose(transform.R('y',-5))
     tmat = transform.T(250,250,0)*trot*transform.T(-250,-250,0)
     tris = tmat*tmat*tmat*tris
     norms= trot*trot*trot*norms
-    
+    print norms
+    print ncamT*norms
     amb = Texture(False, [255,0,0])
     diff = Texture(False, [255,0,0])
     spec = Texture(False, [255,150,150])
     mat = Material(amb, diff, spec, 10)
     for i in range(72):
-        print tris
+        #print tris
         tricam = camT * tris
-        print tricam
+        #print tricam
         #tricam[3] = [1.] * len(tricam[3])
         #tricam = transform.T(*v) * tricam
         print 'trans done'
@@ -564,8 +580,13 @@ def camtest():
         trit = list(triIter(tricam))
         #print trit,tricam
         trit.sort(key=lambda tri: -tri[0][2] - tri[1][2] - tri[2][2])
-        normt = matrix.transpose(norms[:3])
-        print len(trit), len(normt)
+        normcam = ncamT*norms
+        normt = []
+        for j in range(len(normcam[0])):
+            sgn = (normcam[3][j] > 0) * 2 - 1
+            normt.append(normalize(normcam[0][j]*sgn, normcam[1][j]*sgn, normcam[2][j]*sgn))
+        print normt
+        #print len(trit), len(normt)
         for j in range(len(trit)):
             # (p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf):
             t = trit[j]
@@ -576,15 +597,29 @@ def camtest():
                 pt[2]+=0
                 print pt
                 ps.append(Point(*pt + normt[j] + [0,0]))
-            img.setPixels(renderTriangle(*ps + [mat] + v + [lights, {}, zbuf]))
-        #for t in trit:
-        #    l = line(*t[0][:2]+t[1][:2])
-        #    l += line(*t[0][:2]+t[2][:2])
-        #    l += line(*t[2][:2]+t[1][:2])
-        #    img.setPixels([p + ((0,255,0),) for p in l])
+            img.setPixels(renderTriangle(*ps + [mat] + v + [camlights, {}, zbuf]))
+        for t in trit:
+            l = line(*t[0][:2]+t[1][:2])
+            l += line(*t[0][:2]+t[2][:2])
+            l += line(*t[2][:2]+t[1][:2])
+            img.setPixels([p + ((0,0,0),) for p in l])
+
+        for j in range(len(trit)):
+            t = trit[j]
+            ps = []
+            for pt in t:
+                nls = line(pt[0] - 4, pt[1], pt[0] + 4, pt[1])
+                nls += line(pt[0], pt[1] - 4, pt[0], pt[1] + 4)
+                nls += line(pt[0] - 4, pt[1] - 4, pt[0] + 4, pt[1] + 4)
+                nls += line(pt[0] - 4, pt[1] + 4, pt[0] + 4, pt[1] - 4)
+                nls += line(pt[0], pt[1], pt[0] + normt[j][0]*20, pt[1] + normt[j][1]*20)
+                print normt[j][0], normt[j][1]
+                img.setPixels([p + ((0,255,0),) for p in nls])
+        
         img.savePpm('cube/%d.ppm'%(i))
         tris = tmat * tris
-        norms = trot * norms
+        norms = nrot * norms
+        print norms
         print i, (time() - a) * 1000, 'ms'
 if __name__ == '__main__':
     camtest()
