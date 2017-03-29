@@ -1,6 +1,7 @@
 import matrix
 import math
 from common import *
+import shape
 
 sin = lambda t: math.sin(t * math.pi / 180)
 cos = lambda t: math.cos(t * math.pi / 180)
@@ -167,14 +168,14 @@ if __name__ == '__main__':  # parser
             print edges
         elif inp == 'display':
             img = Image(500, 500)
-            drawEdges(projected(edges, cam), img)
-            img.flipUD().display()
+            drawEdges(edges, img)
+            img.display()
         elif inp == 'save':
             inp = raw_input('').strip()
             img = Image(500, 500)
-            drawEdges(projected(edges, cam), img)
+            drawEdges(edges, img)
             if inp[-4:] == '.ppm':
-                img.flipUD().savePpm(inp)
+                img.savePpm(inp)
             else:
                 img.saveAs(inp)
         elif inp == 'saveframe':
@@ -192,3 +193,14 @@ if __name__ == '__main__':  # parser
         elif inp == 'hermite':
             inp = raw_input('').strip()
             addHermite(*[edges]+iparse(inp)+[.01])
+        elif inp == 'clear':
+            edges = edgemtx()
+        elif inp == 'box':
+            inp = raw_input('').strip()
+            shape.addBoxPoints(*[edges] + iparse(inp))
+        elif inp == 'sphere':
+            inp = raw_input('').strip()
+            shape.addSpherePoints(*[edges] + iparse(inp))
+        elif inp == 'torus':
+            inp = raw_input('').strip()
+            shape.addTorusPoints(*[edges] + iparse(inp))
