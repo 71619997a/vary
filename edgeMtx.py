@@ -12,6 +12,10 @@ def addEdgeMtxs(m1, m2):
     m = [m1[i] + m2[i] for i in range(len(m1))]
     return m
 
+def addToEdgeMtx(m, m2):
+    for i in range(len(m)):
+        m[i] += m2[i]
+
 def addPoint(m, x, y, z):
     m[0].append(x)
     m[1].append(y)

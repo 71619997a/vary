@@ -1,4 +1,4 @@
-from edgeMtx import edgemtx, addEdgeMtxs, addTriangle, addPoint, addEdge, addCircle
+from edgeMtx import edgemtx, addToEdgeMtx, addTriangle, addPoint, addEdge, addCircle
 import math
 import transform
 
@@ -10,8 +10,8 @@ def addBoxPoints(m, x, y, z, w, h, d):
         addEdge(m, xcor, ycor, zcor, xcor, ycor, zcor)
     return m
 
-def addSpherePoints(m, x, y, z, r, step=0.05):
-    steps = int(math.ceil(1 / steps))
+def addSpherePoints(m, x, y, z, r, step=0.02):
+    steps = int(math.ceil(1 / step))
     for theta in range(steps):
         for phi in range(steps):
             xcor = x + r * math.sin(phi * math.pi / steps) * math.cos(theta * 2 * math.pi / steps)
@@ -20,16 +20,17 @@ def addSpherePoints(m, x, y, z, r, step=0.05):
             addEdge(m, xcor, ycor, zcor, xcor, ycor, zcor)
     return m
 
-def addTorusPoints(m, x, y, z, r, R, mainStep=0.05, ringStep=0.1):
+def addTorusPoints(m, x, y, z, r, R, mainStep=0.02, ringStep=0.05):
     steps = int(math.ceil(1 / mainStep))
     mCircle = edgemtx()
     addPoint(mCircle, r, 0, 0)
     addCircle(mCircle, 0, 0, 0, r, ringStep)
+    addPoint(mCircle, mCircle[0][-1], mCircle[1][-1], 0)
     for theta in range(steps):
-        yOuter = y + R * math.sin(theta * 360. / steps)
-        zOuter = z + R * math.cos(theta * 360. / steps)
+        yOuter = y + R * math.cos(theta * 2 * math.pi / steps)
+        zOuter = z + R * math.sin(theta * 2 * math.pi / steps)
         movedCircle = transform.T(x, yOuter, zOuter) * transform.R('y', theta * 360. / steps) * mCircle
-        addEdgeMtxs(m, movedCircle)
+        addToEdgeMtx(m, movedCircle)
     return m
 def box(x,y,z,w,h,d):
     p = (x,y,z)
