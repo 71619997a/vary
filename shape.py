@@ -27,9 +27,9 @@ def addTorusPoints(m, x, y, z, r, R, mainStep=0.02, ringStep=0.05):
     addCircle(mCircle, 0, 0, 0, r, ringStep)
     addPoint(mCircle, mCircle[0][-1], mCircle[1][-1], 0)
     for theta in range(steps):
-        yOuter = y + R * math.cos(theta * 2 * math.pi / steps)
+        xOuter = x + R * math.cos(theta * 2 * math.pi / steps)
         zOuter = z + R * math.sin(theta * 2 * math.pi / steps)
-        movedCircle = transform.T(x, yOuter, zOuter) * transform.R('y', theta * 360. / steps) * mCircle
+        movedCircle = transform.T(xOuter, y, zOuter) * transform.R('y', -theta * 360. / steps) * mCircle
         addToEdgeMtx(m, movedCircle)
     return m
 def box(x,y,z,w,h,d):

@@ -169,15 +169,15 @@ if __name__ == '__main__':  # parser
         elif inp == 'display':
             img = Image(500, 500)
             drawEdges(edges, img)
-            img.display()
+            img.flipUD().display()
         elif inp == 'save':
             inp = raw_input('').strip()
             img = Image(500, 500)
             drawEdges(edges, img)
             if inp[-4:] == '.ppm':
-                img.savePpm(inp)
+                img.flipUD().savePpm(inp)
             else:
-                img.saveAs(inp)
+                img.flipUD().saveAs(inp)
         elif inp == 'saveframe':
             inp = raw_input('').strip()
             img = Image(500, 500)
