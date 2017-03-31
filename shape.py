@@ -1,4 +1,4 @@
-from edgeMtx import edgemtx, addToEdgeMtx, addTriangle, addPoint, addEdge, addCircle
+from edgeMtx import edgemtx, addToEdgeMtx, addTriangle, addPoint, addEdge, addCircle, drawEdges
 import math
 import transform
 
@@ -54,3 +54,23 @@ def box(x,y,z,w,h,d):
             ak[3 - i - j] += dim[3 - i - j]
     return m, n
             
+if __name__ == '__main__':
+    from base import Image
+    import transform
+    cube = edgemtx()
+    addBoxPoints(cube, 125, 125, -125, 250, 250, 250)
+    m = edgemtx()
+    xTrans = transform.T(250, 250, 0) * transform.R('x', 18) * transform.T(-250, -250, 0)
+    yTrans = transform.T(250, 250, 0) * transform.R('y', 18) * transform.T(-250, -250, 0)
+    for d in 'xyz':
+        trans = transform.T(250, 250, 0) * transform.R(d, 15) * transform.T(-250, -250, 0)
+        for i in range(24):
+            addToEdgeMtx(m, cube)
+            cube = trans * cube
+        cube = m
+        m = edgemtx()
+    cube = transform.T(250, 250, 0) * transform.R('y', 49) * transform.R('x', 67) * transform.R('z', 23) * transform.T(-250, -250, 0) * cube
+    img = Image(500, 500)
+    drawEdges(cube, img)
+    img.display()
+    img.saveAs('badsphere.png')

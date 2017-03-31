@@ -1,7 +1,6 @@
 import matrix
 import math
 from common import *
-import shape
 
 sin = lambda t: math.sin(t * math.pi / 180)
 cos = lambda t: math.cos(t * math.pi / 180)
@@ -138,6 +137,7 @@ def iparse(inp):
 if __name__ == '__main__':  # parser
     from edgeMtx import edgemtx, addEdge, drawEdges, addBezier, addHermite, addCircle
     from base import Image
+    import shape
     edges = edgemtx()
     trans = TransMatrix()
     frc = 0
