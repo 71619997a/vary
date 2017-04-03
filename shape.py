@@ -10,17 +10,35 @@ def addBoxPoints(m, x, y, z, w, h, d):
         addEdge(m, xcor, ycor, zcor, xcor, ycor, zcor)
     return m
 
-def addSpherePoints(m, x, y, z, r, step=0.02):
+def addSphere(m, x, y, z, r, step=0.02):
+    steps = int(math.ceil(1 / step))
+    pts = genSpherePoints(x, y, z, r, step)
+    for i in range(steps):
+        for j in range(steps):
+            iNext = (i + 1) % steps
+            jNext = (j + 1) % steps
+            cor = i * steps + j
+            leftcor = i * steps + jNext
+            topcor = iNext * steps + j
+            diagcor = iNext * steps + jNext
+            addTriangle(m, *pts[cor] + pts[diagcor] + pts[leftcor])
+            addTriangle(m, *pts[cor] + pts[topcor] + pts[diagcor])
+    return m
+    
+
+def genSpherePoints(x, y, z, r, step=0.02):
+    pts = []
     steps = int(math.ceil(1 / step))
     for theta in range(steps):
         for phi in range(steps):
             xcor = x + r * math.sin(phi * math.pi / steps) * math.cos(theta * 2 * math.pi / steps)
             ycor = y + r * math.sin(phi * math.pi / steps) * math.sin(theta * 2 * math.pi / steps)
             zcor = z + r * math.cos(phi * math.pi / steps)
-            addEdge(m, xcor, ycor, zcor, xcor, ycor, zcor)
-    return m
+            pts.append([xcor, ycor, zcor])
+    return pts
 
 def addTorusPoints(m, x, y, z, r, R, mainStep=0.02, ringStep=0.05):
+    pts = []
     steps = int(math.ceil(1 / mainStep))
     mCircle = edgemtx()
     addPoint(mCircle, r, 0, 0)

@@ -135,7 +135,7 @@ def iparse(inp):
     return [float(i.strip()) for i in inp.split(' ')]
 
 if __name__ == '__main__':  # parser
-    from edgeMtx import edgemtx, addEdge, drawEdges, addBezier, addHermite, addCircle
+    from edgeMtx import edgemtx, addEdge, drawEdges, addBezier, addHermite, addCircle, drawTriangles
     from base import Image
     import shape
     edges = edgemtx()
@@ -168,12 +168,12 @@ if __name__ == '__main__':  # parser
             print edges
         elif inp == 'display':
             img = Image(500, 500)
-            drawEdges(edges, img)
+            drawTriangles(edges, img)
             img.flipUD().display()
         elif inp == 'save':
             inp = raw_input('').strip()
             img = Image(500, 500)
-            drawEdges(edges, img)
+            drawTriangles(edges, img)
             if inp[-4:] == '.ppm':
                 img.flipUD().savePpm(inp)
             else:
@@ -200,7 +200,7 @@ if __name__ == '__main__':  # parser
             shape.addBoxPoints(*[edges] + iparse(inp))
         elif inp == 'sphere':
             inp = raw_input('').strip()
-            shape.addSpherePoints(*[edges] + iparse(inp))
+            shape.addSphere(*[edges] + iparse(inp) + [.05])
         elif inp == 'torus':
             inp = raw_input('').strip()
             shape.addTorusPoints(*[edges] + iparse(inp))
