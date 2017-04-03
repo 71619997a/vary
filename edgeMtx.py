@@ -139,20 +139,23 @@ def drawEdges(m, image, color=(255, 0, 0)):  # draws the edges to an image
         coloredlin = [xy + (color,) for xy in lin]
         image.setPixels(coloredlin)
 
-def drawTriangles(m, image, color=(255, 0, 0), bordercol=(255,255,255), hasBorder=True):
+def drawTriangles(m, image, wireframe=False, color=(255, 0, 0), bordercol=(255,255,255), hasBorder=True):
     triangles = []
     for i in range(0, len(m[0]) - 2, 3):
         triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], sum(m[2][i : i+3])])
-    ordTris = sorted(triangles, key=lambda l: l[6])
-    for t in ordTris:
-        tri = triangle.triangle(*t[:6])
-        coloredtri = [xy + (color,) for xy in tri]
-        if hasBorder:
-            border = line(*t[:4])
-            border.extend(line(*t[2:6]))
-            border.extend(line(*t[:2] + t[4:6]))
-            coloredtri += [xy + (bordercol,) for xy in border]
-        image.setPixels(coloredtri)
+    if not wireframe:
+        ordTris = sorted(triangles, key=lambda l: l[6])
+        for t in ordTris:
+            tri = triangle.triangle(*t[:6])
+            coloredtri = [xy + (color,) for xy in tri]
+            if hasBorder:
+                border = line(*t[:4])
+                border.extend(line(*t[2:6]))
+                border.extend(line(*t[:2] + t[4:6]))
+                coloredtri += [xy + (bordercol,) for xy in border]
+                image.setPixels(coloredtri)
+    else:
+           # XXX WIREFRAME     
 
 def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
     mcols = edgemtx() + [[]]
