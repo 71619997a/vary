@@ -168,12 +168,12 @@ if __name__ == '__main__':  # parser
             print edges
         elif inp == 'display':
             img = Image(500, 500)
-            drawTriangles(edges, img)
+            drawTriangles(edges, img, wireframe=True, bordercol=(0,0,0))
             img.flipUD().display()
         elif inp == 'save':
             inp = raw_input('').strip()
             img = Image(500, 500)
-            drawTriangles(edges, img)
+            drawTriangles(edges, img, wireframe=True, bordercol=(0,0,0))
             if inp[-4:] == '.ppm':
                 img.flipUD().savePpm(inp)
             else:
@@ -197,7 +197,7 @@ if __name__ == '__main__':  # parser
             edges = edgemtx()
         elif inp == 'box':
             inp = raw_input('').strip()
-            shape.addBoxPoints(*[edges] + iparse(inp))
+            shape.addBox(*[edges] + iparse(inp))
         elif inp == 'sphere':
             inp = raw_input('').strip()
             shape.addSphere(*[edges] + iparse(inp) + [.05])

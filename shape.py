@@ -2,13 +2,32 @@ from edgeMtx import edgemtx, addToEdgeMtx, addTriangle, addPoint, addEdge, addCi
 import math
 import transform
 
-def addBoxPoints(m, x, y, z, w, h, d):
+def genBoxPoints(x, y, z, w, h, d):
+    pts = []
     for i in range(8):
         xcor = x + (i >> 2) * w
         ycor = y + (i >> 1) % 2 * w
         zcor = z + i % 2 * w
-        addEdge(m, xcor, ycor, zcor, xcor, ycor, zcor)
-    return m
+        pts.append([xcor, ycor, zcor])
+    return pts
+
+def addBox(m, x, y, z, w, h, d):
+    pts = genBoxPoints(x, y, z, w, h, d)
+    addTriangle(m, *pts[0]+pts[5]+pts[1])
+    addTriangle(m, *pts[0]+pts[4]+pts[5])
+    addTriangle(m, *pts[2]+pts[3]+pts[7])
+    addTriangle(m, *pts[2]+pts[7]+pts[6])
+    
+    addTriangle(m, *pts[0]+pts[2]+pts[6])
+    addTriangle(m, *pts[0]+pts[6]+pts[4])
+    addTriangle(m, *pts[1]+pts[7]+pts[3])
+    addTriangle(m, *pts[1]+pts[5]+pts[7])
+
+    addTriangle(m, *pts[0]+pts[1]+pts[3])
+    addTriangle(m, *pts[0]+pts[3]+pts[2])
+    addTriangle(m, *pts[4]+pts[7]+pts[5])
+    addTriangle(m, *pts[4]+pts[6]+pts[7])
+
 
 def addSphere(m, x, y, z, r, step=0.02):
     steps = int(math.ceil(1 / step))
@@ -37,18 +56,15 @@ def genSpherePoints(x, y, z, r, step=0.02):
             pts.append([xcor, ycor, zcor])
     return pts
 
-def addTorusPoints(m, x, y, z, r, R, mainStep=0.02, ringStep=0.05):
+def genTorusPoints(m, x, y, z, r, R, mainStep=0.02, ringStep=0.05):
     pts = []
     steps = int(math.ceil(1 / mainStep))
-    mCircle = edgemtx()
-    addPoint(mCircle, r, 0, 0)
-    addCircle(mCircle, 0, 0, 0, r, ringStep)
-    addPoint(mCircle, mCircle[0][-1], mCircle[1][-1], 0)
+    rsteps = int(math.ceil(1 / ringStep))
+    om = 2 * math.pi / steps
+    im = 2 * math.pi / rsteps
     for theta in range(steps):
-        xOuter = x + R * math.cos(theta * 2 * math.pi / steps)
-        zOuter = z + R * math.sin(theta * 2 * math.pi / steps)
-        movedCircle = transform.T(xOuter, y, zOuter) * transform.R('y', -theta * 360. / steps) * mCircle
-        addToEdgeMtx(m, movedCircle)
+        for phi in range(rsteps):
+            xcor = math.cos(theta * om) * (r * math.cos(phi * im) + R) + x
     return m
 def box(x,y,z,w,h,d):
     p = (x,y,z)
