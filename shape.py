@@ -33,7 +33,7 @@ def addSphere(m, x, y, z, r, step=0.02):
     steps = int(math.ceil(1 / step))
     pts = genSpherePoints(x, y, z, r, step)
     for i in range(steps):
-        for j in range(steps):
+        for j in range(steps - 1):
             iNext = (i + 1) % steps
             jNext = (j + 1) % steps
             cor = i * steps + j
@@ -50,13 +50,31 @@ def genSpherePoints(x, y, z, r, step=0.02):
     steps = int(math.ceil(1 / step))
     for theta in range(steps):
         for phi in range(steps):
-            xcor = x + r * math.sin(phi * math.pi / steps) * math.cos(theta * 2 * math.pi / steps)
-            ycor = y + r * math.sin(phi * math.pi / steps) * math.sin(theta * 2 * math.pi / steps)
-            zcor = z + r * math.cos(phi * math.pi / steps)
+            xcor = x + r * math.sin(phi * math.pi / (steps - 1)) * math.cos(theta * 2 * math.pi / steps)
+            ycor = y + r * math.sin(phi * math.pi / (steps - 1)) * math.sin(theta * 2 * math.pi / steps)
+            zcor = z + r * math.cos(phi * math.pi / (steps - 1))
             pts.append([xcor, ycor, zcor])
     return pts
 
-def genTorusPoints(m, x, y, z, r, R, mainStep=0.02, ringStep=0.05):
+def addTorus(m, x, y, z, r, R, mainStep=0.02, ringStep=0.05):
+    pts = genTorusPoints(x, y, z, r, R, mainStep, ringStep)
+    steps = int(math.ceil(1 / mainStep))
+    rsteps = int(math.ceil(1 / ringStep))
+    for c in range(steps):
+        for r in range(rsteps):
+            cNext = (c + 1) % steps
+            rNext = (r + 1) % rsteps
+            cor = c * rsteps + r
+            leftcor = c * rsteps + rNext
+            topcor = cNext * rsteps + r
+            diagcor = cNext * rsteps + rNext
+            addTriangle(m, *pts[cor] + pts[diagcor] + pts[leftcor])
+            addTriangle(m, *pts[cor] + pts[topcor] + pts[diagcor])
+    return m
+
+            
+
+def genTorusPoints(x, y, z, r, R, mainStep=0.02, ringStep=0.05):
     pts = []
     steps = int(math.ceil(1 / mainStep))
     rsteps = int(math.ceil(1 / ringStep))
@@ -65,7 +83,10 @@ def genTorusPoints(m, x, y, z, r, R, mainStep=0.02, ringStep=0.05):
     for theta in range(steps):
         for phi in range(rsteps):
             xcor = math.cos(theta * om) * (r * math.cos(phi * im) + R) + x
-    return m
+            ycor = r * math.sin(phi * im) + y
+            zcor = -math.sin(theta * om) * (r * math.cos(phi * im) + R) + z
+            pts.append([xcor, ycor, zcor])
+    return pts
 def box(x,y,z,w,h,d):
     p = (x,y,z)
     dim = (w,h,d)

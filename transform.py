@@ -203,4 +203,4 @@ if __name__ == '__main__':  # parser
             shape.addSphere(*[edges] + iparse(inp) + [.05])
         elif inp == 'torus':
             inp = raw_input('').strip()
-            shape.addTorusPoints(*[edges] + iparse(inp))
+            shape.addTorus(*[edges] + iparse(inp))
