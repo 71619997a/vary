@@ -139,12 +139,19 @@ def drawEdges(m, image, color=(255, 0, 0)):  # draws the edges to an image
         coloredlin = [xy + (color,) for xy in lin]
         image.setPixels(coloredlin)
 
-def drawTriangles(m, image, wireframe=False, color=(255, 0, 0), bordercol=(255,255,255), hasBorder=True):
+def drawTriangles(m, image, wireframe=False, color=(255, 0, 0), bordercol=(255,255,255), hasBorder=True, culling=True):
     triangles = []
     for i in range(0, len(m[0]) - 2, 3):
-        triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], sum(m[2][i : i+3])])
-    ordTris = sorted(triangles, key=lambda l: l[6])
+        triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], m[2][i], m[2][i + 1], m[2][i + 2]])
+    ordTris = sorted(triangles, key=lambda l: l[6]+l[7]+l[8])
     for t in ordTris:
+        if culling:
+            x12 = t[0] - t[2]
+            y12 = t[1] - t[3]
+            x23 = t[0] - t[4]
+            y23 = t[1] - t[5]
+            if x12 * y23 - x23 * y12 <= 0:
+                continue
         if not wireframe:
             tri = triangle.triangle(*t[:6])
             coloredtri = [xy + (color,) for xy in tri]
