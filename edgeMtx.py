@@ -133,13 +133,13 @@ def addTriangle(m, *args):
     for i in range(0, 9, 3):
         addPoint(m, *args[i : i+3])
 
-def drawEdges(m, image, color=(255, 0, 0)):  # draws the edges to an image
+def drawEdges(m, image, color=(0, 0, 0)):  # draws the edges to an image
     for i in range(0, len(m[0]) - 1, 2):
         lin = line(m[0][i], m[1][i], m[0][i + 1], m[1][i + 1])
         coloredlin = [xy + (color,) for xy in lin]
         image.setPixels(coloredlin)
 
-def drawTriangles(m, image, wireframe=False, color=(255, 0, 0), bordercol=(255,255,255), hasBorder=True, culling=True):
+def drawTriangles(m, image, wireframe=False, color=(255, 0, 0), bordercol=(0, 0, 0), hasBorder=True, culling=True):
     triangles = []
     for i in range(0, len(m[0]) - 2, 3):
         triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], m[2][i], m[2][i + 1], m[2][i + 2]])

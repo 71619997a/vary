@@ -25,7 +25,10 @@ class TransMatrix(object):
             return TransMatrix(matrix.multiply(self.lst, mat.lst))
         else:
             return matrix.multiply(self.lst, mat)
-            
+
+    def clone(self):
+        newlst = [row[:] for row in self.lst]
+        return TransMatrix(newlst)
     
 
 def T(a, b, c):
@@ -135,13 +138,13 @@ def iparse(inp):
     return [float(i.strip()) for i in inp.split(' ')]
 
 if __name__ == '__main__':  # parser
-    from edgeMtx import edgemtx, addEdge, drawEdges, addBezier, addHermite, addCircle, drawTriangles
+    from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
     from base import Image
     import shape
-    edges = edgemtx()
-    trans = TransMatrix()
+    cstack = [TransMatrix()]
     frc = 0
     cam = Camera(250, 250, 700, 90, 0, 0, -250, -250, 250)
+    img = Image(500, 500)
     while(True):
         try:
             inp = raw_input('')
@@ -149,58 +152,69 @@ if __name__ == '__main__':  # parser
             break
         if inp == 'line':
             inp = raw_input('')
+            edges = edgemtx()
             addEdge(edges, *iparse(inp))
+            drawEdges(cstack[-1] * edges, img)
         elif inp == 'ident':
-            trans = TransMatrix()
+            cstack[-1] = TransMatrix()
         elif inp == 'scale':
             inp = raw_input('')
-            trans = S(*iparse(inp)) * trans
+            cstack[-1] = S(*iparse(inp)) * cstack[-1]
         elif inp == 'move':
             inp = raw_input('')
-            trans = T(*iparse(inp)) * trans
+            cstack[-1] = T(*iparse(inp)) * cstack[-1]
         elif inp == 'rotate':
             inp = raw_input('')
             axis, t = (i.strip() for i in inp.split(' '))
-            trans = R(axis.lower(), float(t)) * trans
-        elif inp == 'apply':
-            print edges
-            edges = trans * edges
-            print edges
+            cstack[-1] = R(axis.lower(), float(t)) * cstack[-1]
         elif inp == 'display':
-            img = Image(500, 500)
-            drawTriangles(edges, img, wireframe=True, bordercol=(0,0,0))
             img.flipUD().display()
         elif inp == 'save':
             inp = raw_input('').strip()
-            img = Image(500, 500)
-            drawTriangles(edges, img, wireframe=True, bordercol=(0,0,0))
             if inp[-4:] == '.ppm':
                 img.flipUD().savePpm(inp)
             else:
                 img.flipUD().saveAs(inp)
         elif inp == 'saveframe':
             inp = raw_input('').strip()
-            img = Image(500, 500)
-            drawEdges(projected(edges, cam), img)
             img.flipUD().savePpm('%s%d.ppm' % (inp, frc))
             frc += 1
         elif inp == 'circle':
             inp = raw_input('').strip()
+            edges = edgemtx()
             addCircle(*[edges]+iparse(inp)+[.01])
+            drawEdges(cstack[-1] * edges, img)
         elif inp == 'bezier':
             inp = raw_input('').strip()
             addBezier(*[edges]+iparse(inp)+[.01])
         elif inp == 'hermite':
             inp = raw_input('').strip()
-            addHermite(*[edges]+iparse(inp)+[.01])
-        elif inp == 'clear':
             edges = edgemtx()
+            addHermite(*[edges]+iparse(inp)+[.01])
+            drawEdges(cstack[-1] * edges, img)
+        elif inp == 'clear':
+            img = Image(500, 500)
+        elif inp == 'clearstack':
+            cstack = [TransMatrix()]
         elif inp == 'box':
             inp = raw_input('').strip()
-            shape.addBox(*[edges] + iparse(inp))
+            polys = edgemtx()
+            shape.addBox(*[polys] + iparse(inp))
+            print polys
+            print cstack[-1] * polys
+            drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'sphere':
             inp = raw_input('').strip()
-            shape.addSphere(*[edges] + iparse(inp) + [.05])
+            polys = edgemtx()
+            shape.addSphere(*[polys] + iparse(inp) + [.05])
+            drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'torus':
             inp = raw_input('').strip()
-            shape.addTorus(*[edges] + iparse(inp))
+            polys = edgemtx()
+            shape.addTorus(*[polys] + iparse(inp) + [.05, .05])
+            drawTriangles(cstack[-1] * polys, img, wireframe=True)
+        elif inp == 'push':
+            cstack.append(cstack[-1].clone())
+        elif inp == 'pop':
+            cstack.pop()
+        
