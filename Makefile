@@ -1,5 +1,5 @@
 run:
-	python transform.py < 3dscript
+	python transform.py < csscript
 
 margif:
 	python triangle.py

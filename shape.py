@@ -3,11 +3,18 @@ import math
 import transform
 
 def genBoxPoints(x, y, z, w, h, d):
+    # how to preserve orientation for dummies
+    if w < 0:
+        return genBoxPoints(x + w, y, z, -w, h, d)
+    if h < 0:
+        return genBoxPoints(x, y + h, z, w, -h, d)
+    if d < 0:
+        return genBoxPoints(x, y, z + d, w, h, -d)
     pts = []
     for i in range(8):
         xcor = x + (i >> 2) * w
-        ycor = y + (i >> 1) % 2 * w
-        zcor = z + i % 2 * w
+        ycor = y - (i >> 1) % 2 * h
+        zcor = z - i % 2 * d
         pts.append([xcor, ycor, zcor])
     return pts
 

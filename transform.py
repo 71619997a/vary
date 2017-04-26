@@ -159,14 +159,14 @@ if __name__ == '__main__':  # parser
             cstack[-1] = TransMatrix()
         elif inp == 'scale':
             inp = raw_input('')
-            cstack[-1] = S(*iparse(inp)) * cstack[-1]
+            cstack[-1] *= S(*iparse(inp))
         elif inp == 'move':
             inp = raw_input('')
-            cstack[-1] = T(*iparse(inp)) * cstack[-1]
+            cstack[-1] *= T(*iparse(inp))
         elif inp == 'rotate':
             inp = raw_input('')
             axis, t = (i.strip() for i in inp.split(' '))
-            cstack[-1] = R(axis.lower(), float(t)) * cstack[-1]
+            cstack[-1] *= R(axis.lower(), float(t))
         elif inp == 'display':
             img.flipUD().display()
         elif inp == 'save':
@@ -199,8 +199,9 @@ if __name__ == '__main__':  # parser
         elif inp == 'box':
             inp = raw_input('').strip()
             polys = edgemtx()
-            shape.addBox(*[polys] + iparse(inp))
-            print polys
+            coos = iparse(inp)
+            shape.addBox(*[polys] + coos)
+            # print polys
             print cstack[-1] * polys
             drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'sphere':
@@ -214,7 +215,12 @@ if __name__ == '__main__':  # parser
             shape.addTorus(*[polys] + iparse(inp) + [.05, .05])
             drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'push':
+            print 'pushed'
             cstack.append(cstack[-1].clone())
+            for i in cstack:
+                print i
         elif inp == 'pop':
+            print 'popped'
             cstack.pop()
-        
+            for i in cstack:
+                print i
