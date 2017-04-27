@@ -53,7 +53,29 @@ def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, mat): 
             pts.append((x, y, bgcol))
     return pts
 
-def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf):
+
+def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
+    Vx, Vy, Vz = normalize(vx-x,vy-y,vz-z)
+    c = [0,0,0]
+    for l in lights:
+        Lmx , Lmy, Lmz = normalize(l.x-x,l.y-y,l.z-z)
+        Lmn = Lmx * nx + Lmy * ny + Lmz * nz
+        Rmx = 2 * Lmn * nx - Lmx
+        Rmy = 2 * Lmn * ny - Lmy
+        Rmz = 2 * Lmn * nz - Lmz    
+        diff = max(Lmn, 0)
+        try:
+            spec = max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0)**a
+        except:
+            spec = 1 
+        for i in xrange(3):
+            c[i] += Ka[i]*l.Ia[i] + Kd[i]*l.Id[i]*diff + Ks[i]*l.Is[i]*spec
+    for i in xrange(3):
+        c[i] = min(int(c[i]), 65535) / 256
+    return c
+
+
+def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader):
     tri = triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
     det = float((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y))
     pts = []
@@ -79,7 +101,13 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf):
         if zbuf[y][x] >= z:
             continue
         #print 'not buffed'
+
+        nz = p1.nz * d1 + p2.nz * d2 + p3.nz * d3
+        if nz <= 0:
+            continue
         zbuf[y][x] = z
+        nx = p1.nx * d1 + p2.nx * d2 + p3.nx * d3
+        ny = p1.ny * d1 + p2.ny * d2 + p3.ny * d3
         Ka = mat.amb.col
         Kd = mat.diff.col
         Ks = mat.spec.col
@@ -101,9 +129,6 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf):
                     xcor = int(tcx*specw)*4
                     ycor = int(tcy*spech)
                     Ks = spectex[spech-1-ycor][xcor : xcor + 3]
-        nx = p1.nx * d1 + p2.nx * d2 + p3.nx * d3
-        ny = p1.ny * d1 + p2.ny * d2 + p3.ny * d3
-        nz = p1.nz * d1 + p2.nz * d2 + p3.nz * d3
         col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
         pts.append((x, y, col))
     return pts
@@ -144,26 +169,6 @@ def normalize(*v):
     for i in xrange(len(v)):
         v[i] /= norm
     return v
-        
-def shader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
-    Vx, Vy, Vz = normalize(vx-x,vy-y,vz-z)
-    c = [0,0,0]
-    for l in lights:
-        Lmx , Lmy, Lmz = normalize(l.x-x,l.y-y,l.z-z)
-        Lmn = Lmx * nx + Lmy * ny + Lmz * nz
-        Rmx = 2 * Lmn * nx - Lmx
-        Rmy = 2 * Lmn * ny - Lmy
-        Rmz = 2 * Lmn * nz - Lmz    
-        diff = max(Lmn, 0)
-        try:
-            spec = max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0)**a
-        except:
-            spec = 1 
-        for i in xrange(3):
-            c[i] += Ka[i]*l.Ia[i] + Kd[i]*l.Id[i]*diff + Ks[i]*l.Is[i]*spec
-    for i in xrange(3):
-        c[i] = min(int(c[i]), 65535) / 256
-    return c
 
 def getTexture(texture, texcache):
     if texture not in texcache:

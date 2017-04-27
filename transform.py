@@ -1,7 +1,7 @@
 import matrix
 import math
 from common import *
-
+import render
 sin = lambda t: math.sin(t * math.pi / 180)
 cos = lambda t: math.cos(t * math.pi / 180)
 EDGE = 2
@@ -158,9 +158,9 @@ def getPointsFromTriangles(m):  # assumes m is a poly mtx
         v23x, v23y, v23z = tuple(m[n][i+1] - m[n][i+2] for n in range(3))
         v13x, v13y, v13z = tuple(m[n][i] - m[n][i+2] for n in range(3))
         try:
-            n3 = n2 = n1 = normalizeList(cross3d(v12x, v12y, v12z, v13x, v13y, v13z))
-            #n2 = normalizeList(cross3d(-v12x, -v12y, -v12z, v23x, v23y, v23z))
-            #n3 = normalizeList(cross3d(-v23x, -v23y, -v23z, -v13x, -v13y, -v13z))
+            n1 = normalizeList(cross3d(-v12x, -v12y, -v12z, v13x, v13y, v13z))
+            n2 = normalizeList(cross3d(v12x, v12y, v12z, v23x, v23y, v23z))
+            n3 = normalizeList(cross3d(v23x, v23y, v23z, -v13x, -v13y, -v13z))
         except ZeroDivisionError:
             continue
         yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0), 
@@ -174,7 +174,11 @@ niceLights = [
     #Light(0, 0, 200, (0, 20, 80), (30, 100, 200), (50, 150, 255))  # cyan light to the left-top
     ]
 
-def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights):
+def depthShader(x, y, z, nx, ny, nz, *_):
+    return [0, 0, min(255, max(0, int(z + 128)))]
+
+
+def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=depthShader):
     zbuf = [[None] * 500 for _ in xrange(500)]
     for type, mtx in objects:
         if type == EDGE:
@@ -187,7 +191,7 @@ def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=nic
 if __name__ == '__main__':  # parser
     from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
     from base import Image
-    from render import renderTriangle
+    from render import renderTriangle, phongShader
     import shape
     cstack = [TransMatrix()]
     frc = 0
