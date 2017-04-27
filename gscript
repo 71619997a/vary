@@ -38,11 +38,15 @@ sphere
 move
 -10 8 0
 sphere
-0 0 0 5
+0 0 20 5
+circle
+0 0 20 5
 move
 20 0 0
 sphere
-0 0 0 5
+0 0 20 5
+circle
+0 0 20 5
 move
 -10 -8 0
 bezier

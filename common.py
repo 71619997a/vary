@@ -1,4 +1,5 @@
 from collections import namedtuple
+import math
 
 def _record(props):
     if isinstance(props, str):
@@ -18,3 +19,12 @@ Texture = _record('type col texture')
 Material = _record('amb diff spec exp')
 Light = _record('x y z Ia Id Is')
 Camera = _record('x y z dx dy dz vx vy vz')
+
+def normalize(*v):
+    return normalizeList(list(v))
+
+def normalizeList(v):
+    norm = math.sqrt(sum([i**2 for i in v]))
+    for i in xrange(len(v)):
+        v[i] /= norm
+    return v

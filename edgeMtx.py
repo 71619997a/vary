@@ -3,6 +3,7 @@ from line import line
 import triangle
 import matrix
 import math
+from common import *
 
 
 def edgemtx():
@@ -163,7 +164,9 @@ def drawTriangles(m, image, wireframe=False, color=(255, 0, 0), bordercol=(0, 0,
             border.extend(line(*t[:2] + t[4:6]))
             coloredtri += [xy + (bordercol,) for xy in border]
             image.setPixels(coloredtri)
+    
 
+            
 def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
     mcols = edgemtx() + [[]]
     for m, col in ms:
