@@ -147,7 +147,7 @@ if __name__ == '__main__':  # parser
     img = Image(500, 500)
     while(True):
         try:
-            inp = raw_input('')
+            inp = raw_input('').strip()
         except EOFError:  # script file
             break
         if inp == 'line':
@@ -186,7 +186,9 @@ if __name__ == '__main__':  # parser
             drawEdges(cstack[-1] * edges, img)
         elif inp == 'bezier':
             inp = raw_input('').strip()
+            edges = edgemtx()
             addBezier(*[edges]+iparse(inp)+[.01])
+            drawEdges(cstack[-1] * edges, img)
         elif inp == 'hermite':
             inp = raw_input('').strip()
             edges = edgemtx()
@@ -207,7 +209,7 @@ if __name__ == '__main__':  # parser
         elif inp == 'sphere':
             inp = raw_input('').strip()
             polys = edgemtx()
-            shape.addSphere(*[polys] + iparse(inp) + [.05])
+            shape.addSphere(*[polys] + iparse(inp) + [.1])
             drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'torus':
             inp = raw_input('').strip()
@@ -224,3 +226,7 @@ if __name__ == '__main__':  # parser
             cstack.pop()
             for i in cstack:
                 print i
+        elif len(inp) < 1 or inp[0] != '#':
+            print len(inp)
+            print repr(inp)
+            print inp, 'not valid'
