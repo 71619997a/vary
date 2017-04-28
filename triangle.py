@@ -134,6 +134,7 @@ def triangle2(x1, y1, x2, y2, x3, y3):
         A12 = A12start
         A23 = A23start
         A31 = A31start
+        x = xMin
         while x < xMax:
             if A12 > 0 and A23 > 0 and A31 > 0:
                 pts.append((x, y))
