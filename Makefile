@@ -1,6 +1,9 @@
 run:
 	python transform.py < csscript
 
+g:
+	python transform.py < gscript
+
 margif:
 	python triangle.py
 	convert -loop 0 -delay 5 animar/{0..71}.ppm mario.gif

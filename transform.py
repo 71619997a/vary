@@ -152,15 +152,14 @@ def cross3d(v1x, v1y, v1z, v2x, v2y, v2z):
             
 
 def getPointsFromTriangles(m):  # assumes m is a poly mtx
-    print m
     for i in range(0, len(m[0]), 3):
         v12x, v12y, v12z = tuple(m[n][i] - m[n][i+1] for n in range(3))
         v23x, v23y, v23z = tuple(m[n][i+1] - m[n][i+2] for n in range(3))
         v13x, v13y, v13z = tuple(m[n][i] - m[n][i+2] for n in range(3))
         try:
-            n1 = normalizeList(cross3d(-v12x, -v12y, -v12z, v13x, v13y, v13z))
-            n2 = normalizeList(cross3d(v12x, v12y, v12z, v23x, v23y, v23z))
-            n3 = normalizeList(cross3d(v23x, v23y, v23z, -v13x, -v13y, -v13z))
+            n3 = n2 = n1 = normalizeList(cross3d(-v12x, -v12y, -v12z, v13x, v13y, v13z))
+            # n2 = normalizeList(cross3d(v12x, v12y, v12z, v23x, v23y, v23z))
+            # n3 = normalizeList(cross3d(v23x, v23y, v23z, -v13x, -v13y, -v13z))
         except ZeroDivisionError:
             continue
         yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0), 
@@ -168,24 +167,26 @@ def getPointsFromTriangles(m):  # assumes m is a poly mtx
                Point(m[0][i+2], m[1][i+2], m[2][i+2], n3[0], n3[1], n3[2], 0, 0))
 
             
-dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (80, 80, 80)), 4)
+dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (150, 150, 150)), 10)
 niceLights = [
-    Light(750, -3000, 750, (100, 95, 90), (200, 180, 160), (255, 230, 210)),  # sun at just past noon
-    #Light(0, 0, 200, (0, 20, 80), (30, 100, 200), (50, 150, 255))  # cyan light to the left-top
+    # Light(750, -3000, 750, (70, 65, 60), (200, 180, 160), (255, 230, 210)),  # sun at just past noon
+    Light(0, 500, 200, (0, 20, 60), (30, 100, 200), (50, 150, 255))  # cyan light to the left-top
     ]
 
 def depthShader(x, y, z, nx, ny, nz, *_):
-    return [0, 0, min(255, max(0, int(z + 128)))]
+    return [int(nz * 127.5 + 127.5), 0, 0]
 
 
-def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=depthShader):
+def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=-1):
+    if shader == -1:
+        shader = render.phongShader  # wont work in args because module import blah
     zbuf = [[None] * 500 for _ in xrange(500)]
     for type, mtx in objects:
         if type == EDGE:
             drawEdges(mtx, img)
         elif type == POLY:
             for pts in getPointsFromTriangles(mtx):
-                img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, {}, zbuf)))
+                img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, {}, zbuf), shader=shader))
             
 
 if __name__ == '__main__':  # parser
@@ -273,7 +274,7 @@ if __name__ == '__main__':  # parser
         elif inp == 'sphere':
             inp = raw_input('').strip()
             polys = edgemtx()
-            shape.addSphere(*[polys] + iparse(inp) + [.03])
+            shape.addSphere(*[polys] + iparse(inp) + [.05])
             polys = cstack[-1] * polys
             objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
@@ -285,16 +286,8 @@ if __name__ == '__main__':  # parser
             objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'push':
-            print 'pushed'
             cstack.append(cstack[-1].clone())
-            for i in cstack:
-                print i
         elif inp == 'pop':
-            print 'popped'
             cstack.pop()
-            for i in cstack:
-                print i
         elif len(inp) < 1 or inp[0] != '#':
-            print len(inp)
-            print repr(inp)
-            print inp, 'not valid'
+            print repr(inp), 'not valid'

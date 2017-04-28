@@ -33,9 +33,15 @@ def topTriangle(yBase, x1Base, x2Base, x1Top, y1Top):
     else:
         border2 = lineByY(x2Base, yBase, x1Top, y1Top)[::-1]
     i = 0
-    for y in range(y1Top, yBase):
+    for y in range(int(math.ceil(y1Top)), int(math.ceil(yBase))):
+        try:
+            border1[i][0]
+            border2[i][0]
+        except IndexError:
+            continue
         for x in range(border1[i][0], border2[i][0]+1):
             pts.append((x, y))
+        
         i += 1
     return pts + border1 + border2
 
@@ -51,14 +57,19 @@ def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
     else:
         border2 = lineByY(x2Base, yBase, x1Bot, y1Bot)
     i = 0
-    for y in range(yBase, y1Bot + 1):
+    for y in range(int(math.ceil(yBase)), int(math.ceil(y1Bot + 1))):
+        try:
+            border1[i][0]
+            border2[i][0]
+        except IndexError:
+            continue
         for x in range(border1[i][0], border2[i][0]+1):
             pts.append((x, y))
         i += 1
     return pts + border1 + border2
 
 def baseTriangle(yb, xb1, xb2, xp, yp):
-    yb, xb1, xb2, xp, yp = int(yb), int(xb1), int(xb2), int(xp), int(yp)
+    # yb, xb1, xb2, xp, yp = int(round(yb)), int(round(xb1)), int(round(xb2)), int(round(xp)), int(round(yp))
     if yp >= yb:
         return botTriangle(yb, xb1, xb2, xp, yp)
     return topTriangle(yb, xb1, xb2, xp, yp)

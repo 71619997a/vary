@@ -19,6 +19,7 @@ def line(x0, y0, x1, y1):
     return line8(x0, y0, x1, y1)
 
 def lineByY(x0, y0, x1, y1):
+    x0, y0, x1, y1 = _r(x0), _r(y0), _r(x1), _r(y1)
     if x0 > x1:  # 
         x0, x1, y0, y1 = x1, x0, y1, y0
     if y0 < y1:  # q1

@@ -17,8 +17,11 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
     try:
         d1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / det
         d2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / det
+        if d1 < 0 or d2 < 0 or d1 + d2 > 1:
+            # print '({}, {}) not in ({}, {}), ({}, {}), ({}, {})'.format(x,y,x1,y1,x2,y2,x3,y3)
+            return 1, 0, 0
         return d1, d2, 1-d1-d2
-    except:
+    except ZeroDivisionError:
         return 1, 0, 0
 
 def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, mat): #1-6 vertices, 7-12 tcors, 13 material
