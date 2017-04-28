@@ -1,14 +1,14 @@
 from line import lineByY, line
-import transform
-from matrix import multiply
-import matrix
-from os import chdir
-from multiprocessing import Pool
-from png import Reader
-from time import time
-from base import Image
-import obj
-import edgeMtx
+#import transform
+#from matrix import multiply
+#import matrix
+#from os import chdir
+#from multiprocessing import Pool
+#from png import Reader
+#from time import time
+#from base import Image
+#import obj
+#import edgeMtx
 import math
 from common import *
 
@@ -127,7 +127,7 @@ def triangle2(x1, y1, x2, y2, x3, y3):
     A12start = y*dy12 + x*dx12 + c12
     A23start = y*dy23 + x*dx23 + c23
     A31start = y*dy31 + x*dx31 + c31
-    print A12start, A23start, A31start
+    #print A12start, A23start, A31start
     # 4. Loop
     while y < yMax:
         # start at x=xmin, y=whatever
@@ -135,13 +135,17 @@ def triangle2(x1, y1, x2, y2, x3, y3):
         A23 = A23start
         A31 = A31start
         x = xMin
+        hbin=False
         while x < xMax:
-            if A12 > 0 and A23 > 0 and A31 > 0:
+            if (A12 > 0 and A23 > 0 and A31 > 0) or (not A12 and dx12 > 0) or (not A23 and dx23 > 0) or (not A31 and dx31 > 0):
                 pts.append((x, y))
+                hbin=True
+            elif hbin:
+                break
             A12 += dx12
             A23 += dx23
             A31 += dx31
-            print A12, A23, A31
+            #print A12, A23, A31
             x += 1
         # discard A, move Astart down
         A12start += dy12
@@ -150,3 +154,18 @@ def triangle2(x1, y1, x2, y2, x3, y3):
         y += 1
     return pts
             
+if __name__ == '__main__':
+    from timeit import timeit
+    from base import Image
+    t=triangle(50,50,100,100,150,0)
+    t2=triangle2(50,50,100,100,150,0)
+    print 'els:', len(t),len(t2)
+    print 'unique:',len(set(t)),len(set(t2))
+    print 'diff els in t:', set(t)-set(t2),len(set(t)-set(t2))
+    print 'diff els in t2:', set(t2)-set(t),len(set(t2)-set(t))
+    img = Image(500,500)
+    img.setPixels([i +((0,255,0),) for i in t])
+    img.setPixels([i+((255,0,0),) for i in t2])
+    img.saveAs('tri.png')
+    print timeit('triangle(78,23,112,312,312,217)', setup='from __main__ import triangle')
+    print timeit('triangle2(78,23,112,312,312,217)', setup='from __main__ import triangle2')
