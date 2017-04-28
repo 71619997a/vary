@@ -88,3 +88,64 @@ def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
     top = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[2], ys[2])
     bot = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
     return top + bot
+
+
+def triangle2(x1, y1, x2, y2, x3, y3):
+    pts = []
+    # 1. floating point -> integers with more precision
+    x1 = int(round(x1))
+    x2 = int(round(x2))
+    x3 = int(round(x3))
+    y1 = int(round(y1))
+    y2 = int(round(y2))
+    y3 = int(round(y3))
+
+    # 2. find bounding box
+    yMin = min(y1, y2, y3)
+    yMax = max(y1, y2, y3)
+    xMin = min(x1, x2, x3)
+    xMax = max(x1, x2, x3)
+    
+    # 3. use eq of line to find interior:
+    # on line if (y - y1)(x1 - x2) - (x - x1)(y1 - y2) = 0
+    # y(x1 - x2) - x(y1 - y2) + C = 0
+    # increment y = x1 - x2
+    # incr3ement x = y2 - y1
+    # C = x1(y1 - y2)-y1(x1 - x2)
+    dy12 = x1 - x2
+    dx12 = y2 - y1
+    dy23 = x2 - x3
+    dx23 = y3 - y2
+    dy31 = x3 - x1
+    dx31 = y1 - y3
+    c12 = x1*(y1-y2)-y1*(x1-x2)
+    c23 = x2*(y2-y3)-y2*(x2-x3)
+    c31 = x3*(y3-y1)-y3*(x3-x1)
+
+    x = xMin
+    y = yMin
+    A12start = y*dy12 + x*dx12 + c12
+    A23start = y*dy23 + x*dx23 + c23
+    A31start = y*dy31 + x*dx31 + c31
+    print A12start, A23start, A31start
+    # 4. Loop
+    while y < yMax:
+        # start at x=xmin, y=whatever
+        A12 = A12start
+        A23 = A23start
+        A31 = A31start
+        while x < xMax:
+            if A12 > 0 and A23 > 0 and A31 > 0:
+                pts.append((x, y))
+            A12 += dx12
+            A23 += dx23
+            A31 += dx31
+            print A12, A23, A31
+            x += 1
+        # discard A, move Astart down
+        A12start += dy12
+        A23start += dy23
+        A31start += dy31
+        y += 1
+    return pts
+            
