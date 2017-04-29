@@ -2,6 +2,7 @@ import matrix
 import math
 from common import *
 import render
+from line import line
 sin = lambda t: math.sin(t * math.pi / 180)
 cos = lambda t: math.cos(t * math.pi / 180)
 EDGE = 2
@@ -155,11 +156,11 @@ def getPointsFromTriangles(m):  # assumes m is a poly mtx
     for i in range(0, len(m[0]), 3):
         v12x, v12y, v12z = tuple(m[n][i] - m[n][i+1] for n in range(3))
         v23x, v23y, v23z = tuple(m[n][i+1] - m[n][i+2] for n in range(3))
-        v13x, v13y, v13z = tuple(m[n][i] - m[n][i+2] for n in range(3))
+        v31x, v31y, v31z = tuple(m[n][i+2] - m[n][i] for n in range(3))
         try:
-            n3 = n2 = n1 = normalizeList(cross3d(-v12x, -v12y, -v12z, v13x, v13y, v13z))
-            # n2 = normalizeList(cross3d(v12x, v12y, v12z, v23x, v23y, v23z))
-            # n3 = normalizeList(cross3d(v23x, v23y, v23z, -v13x, -v13y, -v13z))
+            n1 = normalizeList(cross3d(-v31x, -v31y, -v31z, v12x, v12y, v12z))
+            n2 = normalizeList(cross3d(-v12x, -v12y, -v12z, v23x, v23y, v23z))
+            n3 = normalizeList(cross3d(-v23x, -v23y, -v23z, v31x, v31y, v31z))
         except ZeroDivisionError:
             continue
         yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0), 
@@ -173,11 +174,11 @@ niceLights = [
     Light(0, 500, 200, (0, 20, 60), (30, 100, 200), (50, 150, 255))  # cyan light to the left-top
     ]
 
-def depthShader(x, y, z, nx, ny, nz, *_):
-    return [int(nz * 127.5 + 127.5), 0, 0]
+def normMapShader(x, y, z, nx, ny, nz, *_):
+    return [int(nx * 127.5 + 127.5), int(ny * 127.5 + 127.5), int(nz * 127.5 + 127.5)]
 
 
-def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=-1):
+def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=normMapShader):
     if shader == -1:
         shader = render.phongShader  # wont work in args because module import blah
     zbuf = [[None] * 500 for _ in xrange(500)]
@@ -187,7 +188,10 @@ def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=nic
         elif type == POLY:
             for pts in getPointsFromTriangles(mtx):
                 img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, {}, zbuf), shader=shader))
-            
+                # border = line(pts[0].x, pts[0].y, pts[1].x, pts[1].y)
+                # border += line(pts[1].x, pts[1].y, pts[2].x, pts[2].y)
+                # border += line(pts[2].x, pts[2].y, pts[0].x, pts[0].y)
+                # img.setPixels([i + ((255, 0, 0),) for i in border])
 
 if __name__ == '__main__':  # parser
     from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
@@ -274,7 +278,7 @@ if __name__ == '__main__':  # parser
         elif inp == 'sphere':
             inp = raw_input('').strip()
             polys = edgemtx()
-            shape.addSphere(*[polys] + iparse(inp) + [.05])
+            shape.addSphere(*[polys] + iparse(inp) + [.01])
             polys = cstack[-1] * polys
             objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
