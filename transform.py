@@ -140,63 +140,12 @@ def iparse(inp):
     return [float(i.strip()) for i in inp.split(' ')]
 
 
-def drawObjects(objects, img):
-    for type, mtx in objects:
-        if type == EDGE:
-            drawEdges(mtx, img)
-        elif type == POLY:
-            drawTriangles(mtx, img, wireframe=True)
-
-
-def cross3d(v1x, v1y, v1z, v2x, v2y, v2z):
-    return [v1y*v2z - v1z*v2y, v1z*v2x - v1x*v2z, v1x*v2y - v1y*v2x]
-            
-
-def getPointsFromTriangles(m):  # assumes m is a poly mtx
-    for i in range(0, len(m[0]), 3):
-        v12x, v12y, v12z = tuple(m[n][i] - m[n][i+1] for n in range(3))
-        v23x, v23y, v23z = tuple(m[n][i+1] - m[n][i+2] for n in range(3))
-        v31x, v31y, v31z = tuple(m[n][i+2] - m[n][i] for n in range(3))
-        try:
-            n1 = normalizeList(cross3d(-v31x, -v31y, -v31z, v12x, v12y, v12z))
-            n2 = normalizeList(cross3d(-v12x, -v12y, -v12z, v23x, v23y, v23z))
-            n3 = normalizeList(cross3d(-v23x, -v23y, -v23z, v31x, v31y, v31z))
-        except ZeroDivisionError:
-            continue
-        yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0), 
-               Point(m[0][i+1], m[1][i+1], m[2][i+1], n2[0], n2[1], n2[2], 0, 0), 
-               Point(m[0][i+2], m[1][i+2], m[2][i+2], n3[0], n3[1], n3[2], 0, 0))
-
-            
-dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (150, 150, 150)), 10)
-niceLights = [
-    # Light(750, -3000, 750, (70, 65, 60), (200, 180, 160), (255, 230, 210)),  # sun at just past noon
-    Light(0, 500, 200, (0, 20, 60), (30, 100, 200), (50, 150, 255))  # cyan light to the left-top
-    ]
-
-def normMapShader(x, y, z, nx, ny, nz, *_):
-    return [int(nx * 127.5 + 127.5), int(ny * 127.5 + 127.5), int(nz * 127.5 + 127.5)]
-
-
-def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=normMapShader):
-    if shader == -1:
-        shader = render.phongShader  # wont work in args because module import blah
-    zbuf = [[None] * 500 for _ in xrange(500)]
-    for type, mtx in objects:
-        if type == EDGE:
-            drawEdges(mtx, img)
-        elif type == POLY:
-            for pts in getPointsFromTriangles(mtx):
-                img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, {}, zbuf), shader=shader))
-                # border = line(pts[0].x, pts[0].y, pts[1].x, pts[1].y)
-                # border += line(pts[1].x, pts[1].y, pts[2].x, pts[2].y)
-                # border += line(pts[2].x, pts[2].y, pts[0].x, pts[0].y)
-                # img.setPixels([i + ((255, 0, 0),) for i in border])
 
 if __name__ == '__main__':  # parser
     from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
     from base import Image
-    from render import renderTriangle, phongShader
+    from render import drawObjectsNicely
+    import render
     import shape
     cstack = [TransMatrix()]
     frc = 0

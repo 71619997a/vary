@@ -3,7 +3,7 @@ push
 move
 250 320 0
 rotate
-y -25
+y -60
 scale
 1.1 1.1 1.1
 # BODY

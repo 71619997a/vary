@@ -14,7 +14,7 @@ def genBoxPoints(x, y, z, w, h, d):
     for i in range(8):
         xcor = x + (i >> 2) * w
         ycor = y - (i >> 1) % 2 * h
-        zcor = z - i % 2 * d
+        zcor = z - d + i % 2 * d
         pts.append([xcor, ycor, zcor])
     return pts
 

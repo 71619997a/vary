@@ -14,6 +14,10 @@ def _record(props):
             for k, v in kwargs.iteritems():
                 setattr(self, k, v)
     return Record
+
+
+EDGE = 2
+POLY = 3
 Point = _record('x y z nx ny nz tx ty')
 Texture = _record('type col texture')
 Material = _record('amb diff spec exp')
