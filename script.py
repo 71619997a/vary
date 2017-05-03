@@ -3,7 +3,7 @@ from transform import TransMatrix
 import transform
 from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
 from base import Image
-from render import renderTriangle, phongShader
+from render import renderTriangle, phongShader, drawObjectsNicely
 import shape
 
 EDGE = 2
@@ -45,16 +45,16 @@ def run(filename):
         elif inp == 'rotate':
             cstack[-1] *= transform.R(*command[1:3])
         elif inp == 'display':
-            transform.drawObjectsNicely(objects, img)
+            drawObjectsNicely(objects, img)
             img.flipUD().display()
         elif inp == 'save':
-            transform.drawObjectsNicely(objects, img)
+            drawObjectsNicely(objects, img)
             if inp[-4:] == '.ppm':
                 img.flipUD().savePpm(command[1])
             else:
                 img.flipUD().saveAs(command[1])
         elif inp == 'saveframe':
-            transform.drawObjectsNicely(objects, img)
+            drawObjectsNicely(objects, img)
             img.flipUD().savePpm('%s%d.ppm' % (command[1], frc))
             frc += 1
         elif inp == 'circle':
@@ -121,4 +121,4 @@ def run(filename):
         print command
 
 if __name__ == '__main__':
-    run('test.mdl')
+    run('script.mdl')
