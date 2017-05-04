@@ -5,6 +5,7 @@ from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHerm
 from base import Image
 from render import renderTriangle, phongShader, drawObjectsNicely
 import shape
+from sys import argv
 
 EDGE = 2
 POLY = 3
@@ -121,4 +122,6 @@ def run(filename):
         print command
 
 if __name__ == '__main__':
-    run('script.mdl')
+    if len(argv) < 2:
+        raise Exception('\nUsage: python script.py [mdl file]')
+    run(argv[1])
