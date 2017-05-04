@@ -1,5 +1,5 @@
 run:
-	python script.py test.mdl
+	python script.py script.mdl
 
 g:
 	python script.py gscript.mdl

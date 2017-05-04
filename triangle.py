@@ -89,9 +89,11 @@ from common import *
 #     bot = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
 #     return top + bot
 
-PREC = 6
+PREC = 16
 PRMUL = 1 << PREC
 def triangle(x1, y1, x2, y2, x3, y3):
+    if x1 == 225 or x2 == 225 or x3 == 225:
+        print x3 - x1, x2 - x1, x3 - x2
     pts = []
     # 1. floating point -> fixed point
     x1 = int(round(x1 * PRMUL))  # integer + n bytes of fixed prec
@@ -130,11 +132,11 @@ def triangle(x1, y1, x2, y2, x3, y3):
     c23 = x2*y23-y2*x23
     c31 = x3*y31-y3*x31
     if y12 < 0 or (y12 == 0 and x12 > 0):
-        c12 += 1
+        c12 += 2
     if y12 < 0 or (y23 == 0 and x23 > 0):
-        c23 += 1
+        c23 += 2
     if y31 < 0 or (y31 == 0 and x31 > 0):
-        c31 += 1
+        c31 += 2
     x = xMin
     y = yMin
     fx = x << PREC

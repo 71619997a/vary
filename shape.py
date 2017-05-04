@@ -55,11 +55,13 @@ def addSphere(m, x, y, z, r, step=0.02):
 def genSpherePoints(x, y, z, r, step=0.02):
     pts = []
     steps = int(math.ceil(1 / step))
-    for theta in range(steps):
-        for phi in range(steps):
-            xcor = x + r * math.sin(phi * math.pi / (steps - 1)) * math.cos(theta * 2 * math.pi / steps)
-            ycor = y + r * math.sin(phi * math.pi / (steps - 1)) * math.sin(theta * 2 * math.pi / steps)
-            zcor = z + r * math.cos(phi * math.pi / (steps - 1))
+    fleps = long(1 / float(steps - 1) * (1 << 32))
+    for theta in range(0, steps << 32, 1 << 32):
+        for phi in range(0, steps << 32, 1 << 32):
+            print phi / (steps - 1)
+            xcor = x + r * math.sin((phi / fleps) % 2 * math.pi) * math.cos(theta * 2 * math.pi / steps)
+            ycor = y + r * math.sin((phi / fleps) % 2 * math.pi) * math.sin(theta * 2 * math.pi / steps)
+            zcor = z + r * math.cos((phi / fleps) % 2 * math.pi)
             pts.append([xcor, ycor, zcor])
     return pts
 
