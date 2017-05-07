@@ -3,7 +3,7 @@ from transform import TransMatrix
 import transform
 from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
 from base import Image
-from render import renderTriangle, phongShader, drawObjectsNicely
+from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects
 import shape
 from sys import argv
 
@@ -46,16 +46,16 @@ def run(filename):
         elif inp == 'rotate':
             cstack[-1] *= transform.R(*command[1:3])
         elif inp == 'display':
-            drawObjectsNicely(objects, img)
+            drawObjects(objects, img)
             img.flipUD().display()
         elif inp == 'save':
-            drawObjectsNicely(objects, img)
+            drawObjects(objects, img)
             if inp[-4:] == '.ppm':
                 img.flipUD().savePpm(command[1])
             else:
                 img.flipUD().saveAs(command[1])
         elif inp == 'saveframe':
-            drawObjectsNicely(objects, img)
+            drawObjects(objects, img)
             img.flipUD().savePpm('%s%d.ppm' % (command[1], frc))
             frc += 1
         elif inp == 'circle':
@@ -88,7 +88,7 @@ def run(filename):
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'sphere':
             polys = edgemtx()
-            shape.addSphere(*(polys,) + command[1:5] + (.01,))
+            shape.addSphere(*(polys,) + command[1:5] + (.05,))
             polys = cstack[-1] * polys
             objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
