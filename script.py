@@ -102,17 +102,6 @@ def run(filename):
             cstack.append(cstack[-1].clone())
         elif inp == 'pop':
             cstack.pop()
-
-
-
-
-
-
-
-
-
-
-
     
     stack = [ [x[:] for x in tmp] ]
     img = Image(500, 500)
@@ -120,6 +109,7 @@ def run(filename):
     step = 0.1
     for command in commands:
         print command
+    print symbols
 
 if __name__ == '__main__':
     if len(argv) < 2:
