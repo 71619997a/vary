@@ -84,4 +84,8 @@ class Image(object):
                         img.setPixel(s3 % width, s3 / width, rgb)
                 return img
 
-        
+def makeAnimation(name, format='png'):
+        os.system('convert anim/%s*.%s %s.gif' % (name, format, name))
+
+def clearAnim():
+        os.sytem('rm anim/*')
