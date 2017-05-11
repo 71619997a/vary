@@ -2,7 +2,7 @@ import mdl
 from transform import TransMatrix
 import transform
 from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
-from base import Image
+from base import Image, makeAnimation, clearAnim
 from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects
 import shape
 from sys import argv
@@ -16,6 +16,75 @@ def err(s):
 
 def warn(s):
     print 'Warning\n'+s
+
+def runFrame(frame, commands):
+    cstack = [TransMatrix()]
+    img = Image(500, 500)
+    objects = []
+    for command in commands:
+        inp = command[0]
+        args = command[1:]
+        if inp == 'line':
+            edges = edgemtx()
+            addEdge(edges, *command[1:7])
+            edges = cstack[-1] * edges
+            objects.append((EDGE, edges))
+            #drawEdges(cstack[-1] * edges, img)
+        elif inp == 'ident':
+            cstack[-1] = TransMatrix()
+        elif inp == 'scale':
+            kval = frame[args[3]]
+            cstack[-1] *= transform.S(*args[:3]) * transform.S(kval, kval, kval)  # scaling a scale with scale
+        elif inp == 'move':
+            kval = frame[args[3]]
+            cstack[-1] *= transform.T(*[i * kval for i in args[:3]])
+        elif inp == 'rotate':
+            kval = frame[args[2]]
+            cstack[-1] *= transform.R(args[0], args[1] * kval)
+        elif inp == 'circle':
+            edges = edgemtx()
+            addCircle(*(edges,)+command[1:5]+(.01,))
+            edges = cstack[-1] * edges
+            objects.append((EDGE, edges))
+            #drawEdges(cstack[-1] * edges, img)
+        elif inp == 'bezier':
+            edges = edgemtx()
+            addBezier(*(edges,)+command[1:9]+(.01,))
+            edges = cstack[-1] * edges
+            objects.append((EDGE, edges))
+            #drawEdges(cstack[-1] * edges, img)
+        elif inp == 'hermite':
+            edges = edgemtx()
+            addHermite(*(edges,)+command[1:9]+(.01,))
+            edges = cstack[-1] * edges
+            objects.append((EDGE, edges))
+            #drawEdges(cstack[-1] * edges, img)
+        elif inp == 'clearstack':
+            cstack = [TransMatrix()]
+        elif inp == 'box':
+            polys = edgemtx()
+            shape.addBox(*(polys,) + command[1:7])
+            polys = cstack[-1] * polys
+            objects.append((POLY, polys))
+            #drawTriangles(cstack[-1] * polys, img, wireframe=True)
+        elif inp == 'sphere':
+            polys = edgemtx()
+            shape.addSphere(*(polys,) + command[1:5] + (.05,))
+            polys = cstack[-1] * polys
+            objects.append((POLY, polys))
+            #drawTriangles(cstack[-1] * polys, img, wireframe=True)
+        elif inp == 'torus':
+            polys = edgemtx()
+            shape.addTorus(*(polys,) + command[1:6] + (.05, .05))
+            polys = cstack[-1] * polys
+            objects.append((POLY, polys))
+            #drawTriangles(cstack[-1] * polys, img, wireframe=True)
+        elif inp == 'push':
+            cstack.append(cstack[-1].clone())
+        elif inp == 'pop':
+            cstack.pop()
+    return objects
+
 
 def run(filename):
     """
@@ -35,10 +104,6 @@ def run(filename):
     frames = None
     basename = 'anim'
     varying = False
-    cstack = [TransMatrix()]
-    frc = 0
-    img = Image(500, 500)
-    objects = []
     # pass 1
     for command in commands:
         cmd = command[0]
@@ -56,8 +121,8 @@ def run(filename):
         if basename == 'anim':
             warn('Basename not set, using default of anim.')
         # pass 2
-        frameList = [{knob: 0 for type, knob in symbols if type == 'knob'} for _ in range(frames)]
-        print frameList
+        upd = lambda d, n: 0 if d.update(n) else d
+        frameList = [upd({k: v[1] for k, v in symbols.iteritems() if v[0] == 'knob'}, {None: 1}) for _ in range(frames)]
         for command in commands:
             cmd = command[0]
             args = command[1:]
@@ -70,14 +135,29 @@ def run(filename):
                         frame[key] = args[0]
             elif cmd == 'vary':
                 val = args[3]
-                inc = (1.*args[4] - args[3])/(args[2] - args[1] + 1)
+                inc = (1.*args[4] - args[3])/(args[2] - args[1])
                 for frid in range(args[1], args[2] + 1):
                     frameList[frid][args[0]] = val
                     val += inc
-                    
-                    
+        print frameList
+        # pass for each frame
+        i = 0
+        for frame in frameList:
+            objects = runFrame(frame, commands)
+            img = Image(500, 500)
+            drawObjects(objects, img)
+            img.saveAs('anim/%s%03d.png' % (basename, i))
+            i += 1  # easier
+        print 'All images saved, creating animation...'
+        makeAnimation(basename)
+        # clearAnim()
+        
         
     else:
+        cstack = [TransMatrix()]
+        frc = 0
+        img = Image(500, 500)
+        objects = []
         for command in commands:
             inp = command[0]
             if inp == 'line':
