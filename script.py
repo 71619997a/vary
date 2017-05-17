@@ -140,14 +140,16 @@ def run(filename):
                     frameList[frid][args[0]] = val
                     val += inc
         print frameList
+        imgs = []
         # pass for each frame
-        i = 0
         for frame in frameList:
             objects = runFrame(frame, commands)
             img = Image(500, 500)
             drawObjects(objects, img)
-            img.saveAs('anim/%s%03d.png' % (basename, i))
-            i += 1  # easier
+            imgs.append(img)
+        print 'Images created, saving...'
+        for i in range(len(imgs)):
+            imgs[i].saveAs('anim/%s%03d.png' % (basename, i))
         print 'All images saved, creating animation...'
         makeAnimation(basename)
         # clearAnim()

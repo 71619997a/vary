@@ -32,3 +32,6 @@ def normalizeList(v):
     for i in xrange(len(v)):
         v[i] /= norm
     return v
+
+def cross(v1x, v1y, v1z, v2x, v2y, v2z):
+    return [v1y*v2z - v1z*v2y, v1z*v2x - v1x*v2z, v1x*v2y - v1y*v2x]

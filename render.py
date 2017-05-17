@@ -153,25 +153,60 @@ def drawObjects(objects, img):
         elif type == POLY:
             drawTriangles(mtx, img, wireframe=True)
 
-
-def cross3d(v1x, v1y, v1z, v2x, v2y, v2z):
-    return [v1y*v2z - v1z*v2y, v1z*v2x - v1x*v2z, v1x*v2y - v1y*v2x]
+def addIP(a, v):
+    for i in xrange(len(v)):
+        a[i] += v[i]
             
+def genVertexNorms(tris, vxs):
+    norms = [[0,0,0] for _ in vxs]
+    for p1, p2, p3 in tris:
+        an1, an2, an3 = norms[p1], norms[p2], norms[p3]
+        v1, v2, v3 = vxs[p1], vxs[p2], vxs[p3]
+        v12x, v12y, v12z = tuple(v2[n]-v1[n] for n in \
+range(3))
+        v23x, v23y, v23z = tuple(v3[n]-v2[n] for n i\
+n range(3))
+        v31x, v31y, v31z = tuple(v1[n]-v3[n] for n in \
+range(3))
+        try:
+            c1 = cross(v31x, v31y, v31z, v12x\
+, v12y, v12z)
+            c2 = cross(v12x, v12y, v12z, v23x\
+, v23y, v23z)
+            c3 = cross(v23x, v23y, v23z, v31x\
+, v31y, v31z)
+        except ZeroDivisionError:
+            continue
+        addIP(an1, c1)
+        addIP(an2, c2)
+        addIP(an3, c2)
+    for n in norms:
+        n = normalizeList(n)
+    return norms           
 
+            
 def getPointsFromTriangles(m):  # assumes m is a poly mtx
     for i in range(0, len(m[0]), 3):
         v12x, v12y, v12z = tuple(m[n][i] - m[n][i+1] for n in range(3))
         v23x, v23y, v23z = tuple(m[n][i+1] - m[n][i+2] for n in range(3))
         v31x, v31y, v31z = tuple(m[n][i+2] - m[n][i] for n in range(3))
         try:
-            n1 = normalizeList(cross3d(-v31x, -v31y, -v31z, v12x, v12y, v12z))
-            n2 = normalizeList(cross3d(-v12x, -v12y, -v12z, v23x, v23y, v23z))
-            n3 = normalizeList(cross3d(-v23x, -v23y, -v23z, v31x, v31y, v31z))
+            n1 = normalizeList(cross(-v31x, -v31y, -v31z, v12x, v12y, v12z))
+            n2 = normalizeList(cross(-v12x, -v12y, -v12z, v23x, v23y, v23z))
+            n3 = normalizeList(cross(-v23x, -v23y, -v23z, v31x, v31y, v31z))
         except ZeroDivisionError:
             continue
         yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0), 
                Point(m[0][i+1], m[1][i+1], m[2][i+1], n2[0], n2[1], n2[2], 0, 0), 
                Point(m[0][i+2], m[1][i+2], m[2][i+2], n3[0], n3[1], n3[2], 0, 0))
+
+def trianglesFromVTN(vxs, tris, norms):
+    for a,b,c in tris:
+        yield (
+            Point(*vxs[a]+norms[a]+[0,0]),
+            Point(*vxs[b]+norms[b]+[0,0]),
+            Point(*vxs[c]+norms[c]+[0,0]))
+        
 
             
 dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (150, 150, 150)), 10)
@@ -186,11 +221,11 @@ def normMapShader(x, y, z, nx, ny, nz, *_):
 
 def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=phongShader):
     zbuf = [[None] * 500 for _ in xrange(500)]
-    for type, mtx in objects:
+    for type, points in objects:
         if type == EDGE:
             drawEdges(mtx, img)
         elif type == POLY:
-            for pts in getPointsFromTriangles(mtx):
+            for pts in points:
                 img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, {}, zbuf), shader=shader))
                 # border = line(pts[0].x, pts[0].y, pts[1].x, pts[1].y)
                 # border += line(pts[1].x, pts[1].y, pts[2].x, pts[2].y)
