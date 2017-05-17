@@ -1,5 +1,5 @@
 run:
-	python script.py script.mdl
+	python script.py simple_anim.mdl
 
 g:
 	python script.py gscript.mdl
