@@ -6,9 +6,11 @@ from base import Image, makeAnimation, clearAnim
 from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects
 import shape
 from sys import argv
+import time
 
 EDGE = 2
 POLY = 3
+draw = drawObjectsNicely
 
 def err(s):
     print 'ERROR\n'+s
@@ -17,6 +19,8 @@ def err(s):
 def warn(s):
     print 'Warning\n'+s
 
+
+    
 def runFrame(frame, commands):
     cstack = [TransMatrix()]
     img = Image(500, 500)
@@ -62,10 +66,14 @@ def runFrame(frame, commands):
         elif inp == 'clearstack':
             cstack = [TransMatrix()]
         elif inp == 'box':
-            polys = edgemtx()
-            shape.addBox(*(polys,) + command[1:7])
-            polys = cstack[-1] * polys
-            objects.append((POLY, polys))
+            vxs = cstack[-1] * shape.genBoxPoints(commands[1:7])
+            tris = shape.genBoxTris()
+            for tri in autoTrianglesFromVT(vxs, tris):
+                objects.append(tri)
+            #polys = edgemtx()
+            #shape.addBox(*(polys,) + command[1:7])
+            #polys = cstack[-1] * polys
+            #objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'sphere':
             polys = edgemtx()
@@ -94,7 +102,7 @@ def run(filename):
     tmp = TransMatrix()
 
     p = mdl.parseFile(filename)
-    print p
+    #print p
     if p:
         (commands, symbols) = p
     else:
@@ -139,19 +147,26 @@ def run(filename):
                 for frid in range(args[1], args[2] + 1):
                     frameList[frid][args[0]] = val
                     val += inc
-        print frameList
         imgs = []
         # pass for each frame
+        print 'Pass 2 complete, beginning image rendering...'
+        a = time.time()
         for frame in frameList:
             objects = runFrame(frame, commands)
             img = Image(500, 500)
-            drawObjects(objects, img)
+            print objects[0][1]
+            draw(objects, img)
             imgs.append(img)
-        print 'Images created, saving...'
+        print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)
+        print 'Saving images...'
+        a = time.time()
         for i in range(len(imgs)):
             imgs[i].saveAs('anim/%s%03d.png' % (basename, i))
-        print 'All images saved, creating animation...'
+        print 'Images saved in %f ms' % (int((time.time() - a) * 1000000)/1000.)
+        print 'Creating animation... (converting to gif)'
+        a = time.time()
         makeAnimation(basename)
+        print 'Animation created in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         # clearAnim()
         
         

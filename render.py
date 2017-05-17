@@ -162,19 +162,13 @@ def genVertexNorms(tris, vxs):
     for p1, p2, p3 in tris:
         an1, an2, an3 = norms[p1], norms[p2], norms[p3]
         v1, v2, v3 = vxs[p1], vxs[p2], vxs[p3]
-        v12x, v12y, v12z = tuple(v2[n]-v1[n] for n in \
-range(3))
-        v23x, v23y, v23z = tuple(v3[n]-v2[n] for n i\
-n range(3))
-        v31x, v31y, v31z = tuple(v1[n]-v3[n] for n in \
-range(3))
+        v12x, v12y, v12z = tuple(v2[n]-v1[n] for n in range(3))
+        v23x, v23y, v23z = tuple(v3[n]-v2[n] for n in range(3))
+        v31x, v31y, v31z = tuple(v1[n]-v3[n] for n in range(3))
         try:
-            c1 = cross(v31x, v31y, v31z, v12x\
-, v12y, v12z)
-            c2 = cross(v12x, v12y, v12z, v23x\
-, v23y, v23z)
-            c3 = cross(v23x, v23y, v23z, v31x\
-, v31y, v31z)
+            c1 = cross(v31x, v31y, v31z, v12x, v12y, v12z)
+            c2 = cross(v12x, v12y, v12z, v23x, v23y, v23z)
+            c3 = cross(v23x, v23y, v23z, v31x, v31y, v31z)
         except ZeroDivisionError:
             continue
         addIP(an1, c1)
@@ -207,7 +201,8 @@ def trianglesFromVTN(vxs, tris, norms):
             Point(*vxs[b]+norms[b]+[0,0]),
             Point(*vxs[c]+norms[c]+[0,0]))
         
-
+def autoTrianglesFromVT(vxs, tris):
+    return trianglesFromVTN(vxs, tris, genVertexNorms(vxs, tris))
             
 dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (150, 150, 150)), 10)
 niceLights = [
@@ -226,6 +221,7 @@ def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=nic
             drawEdges(mtx, img)
         elif type == POLY:
             for pts in points:
+                print pts
                 img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, {}, zbuf), shader=shader))
                 # border = line(pts[0].x, pts[0].y, pts[1].x, pts[1].y)
                 # border += line(pts[1].x, pts[1].y, pts[2].x, pts[2].y)

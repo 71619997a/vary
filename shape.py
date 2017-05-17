@@ -80,7 +80,7 @@ def genTorusTris(mainStep=0.02, ringStep=0.05):
             leftcor = c * rsteps + rNext
             topcor = cNext * rsteps + r
             diagcor = cNext * rsteps + rNext
-            tris.append((cor, diagcor, leftcor)))
+            tris.append((cor, diagcor, leftcor))
             tris.append((cor, topcor, diagcor))
     return tris
 

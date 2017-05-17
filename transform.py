@@ -26,7 +26,19 @@ class TransMatrix(object):
     def __mul__(self, mat):
         if isinstance(mat, TransMatrix):
             return TransMatrix(matrix.multiply(self.lst, mat.lst))
-        else:
+        elif isinstance(mat[0], tuple):  # point list (x,y,z)
+            newls = []
+            for pt in mat:
+                nx = self.lst[0][3]
+                ny = self.lst[1][3]
+                nz = self.lst[2][3]
+                for i in range(3):
+                    nx += self.lst[0][i] * pt[i]
+                    ny += self.lst[1][i] * pt[i]
+                    nz += self.lst[2][i] * pt[i]
+                newls.append((nx,ny,nz))
+            return newls
+        else:  # matrix
             return matrix.multiply(self.lst, mat)
 
     def clone(self):
