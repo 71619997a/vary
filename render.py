@@ -157,7 +157,7 @@ def addIP(a, v):
     for i in xrange(len(v)):
         a[i] += v[i]
             
-def genVertexNorms(tris, vxs):
+def genVertexNorms(vxs, tris):
     norms = [[0,0,0] for _ in vxs]
     for p1, p2, p3 in tris:
         an1, an2, an3 = norms[p1], norms[p2], norms[p3]
@@ -166,16 +166,20 @@ def genVertexNorms(tris, vxs):
         v23x, v23y, v23z = tuple(v3[n]-v2[n] for n in range(3))
         v31x, v31y, v31z = tuple(v1[n]-v3[n] for n in range(3))
         try:
-            c1 = cross(v31x, v31y, v31z, v12x, v12y, v12z)
-            c2 = cross(v12x, v12y, v12z, v23x, v23y, v23z)
-            c3 = cross(v23x, v23y, v23z, v31x, v31y, v31z)
+            c1 = cross(v31x, v31y, v31z, -v12x, -v12y, -v12z)
+            c2 = cross(v12x, v12y, v12z, -v23x, -v23y, -v23z)
+            c3 = cross(v23x, v23y, v23z, -v31x, -v31y, -v31z)
         except ZeroDivisionError:
             continue
         addIP(an1, c1)
         addIP(an2, c2)
         addIP(an3, c2)
-    for n in norms:
-        n = normalizeList(n)
+    for i in range(len(norms)):
+        n = norms[i]
+        if n != [0.,0.,0.]:
+            norms[i] = normalizedTuple(n)
+        else:
+            norms[i] = (1.,0.,0.)
     return norms           
 
             
@@ -197,9 +201,9 @@ def getPointsFromTriangles(m):  # assumes m is a poly mtx
 def trianglesFromVTN(vxs, tris, norms):
     for a,b,c in tris:
         yield (
-            Point(*vxs[a]+norms[a]+[0,0]),
-            Point(*vxs[b]+norms[b]+[0,0]),
-            Point(*vxs[c]+norms[c]+[0,0]))
+            Point(*vxs[a]+norms[a]+(0,0)),
+            Point(*vxs[b]+norms[b]+(0,0)),
+            Point(*vxs[c]+norms[c]+(0,0)))
         
 def autoTrianglesFromVT(vxs, tris):
     return trianglesFromVTN(vxs, tris, genVertexNorms(vxs, tris))
@@ -221,7 +225,6 @@ def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=nic
             drawEdges(mtx, img)
         elif type == POLY:
             for pts in points:
-                print pts
                 img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, {}, zbuf), shader=shader))
                 # border = line(pts[0].x, pts[0].y, pts[1].x, pts[1].y)
                 # border += line(pts[1].x, pts[1].y, pts[2].x, pts[2].y)

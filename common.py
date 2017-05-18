@@ -33,5 +33,9 @@ def normalizeList(v):
         v[i] /= norm
     return v
 
+def normalizedTuple(t): #ugh
+    norm = math.sqrt(sum([i**2 for i in t]))
+    return tuple(i/norm for i in t)
+
 def cross(v1x, v1y, v1z, v2x, v2y, v2z):
     return [v1y*v2z - v1z*v2y, v1z*v2x - v1x*v2z, v1x*v2y - v1y*v2x]
