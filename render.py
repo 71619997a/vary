@@ -12,6 +12,7 @@ import edgeMtx
 import math
 from common import *
 from triangle import triangle
+#from functools import lru_cache
 
 
 def drawEdges(m, image, color=(0, 0, 0)):  # draws the edges to an image
