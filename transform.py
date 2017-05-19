@@ -16,7 +16,7 @@ class TransMatrix(object):
 
     def __getitem__(self, i):
         return self.lst[i]
-    
+
     def __setitem__(self, i, v):
         self.lst[i] = v
 
@@ -44,7 +44,7 @@ class TransMatrix(object):
     def clone(self):
         newlst = [row[:] for row in self.lst]
         return TransMatrix(newlst)
-    
+
 
 def T(a, b, c):
     mat = TransMatrix()
@@ -134,16 +134,16 @@ def C3invT(r, t, n, f):
     return mat
 
 '''
-A = 
+A =
 n/r 0   0   0
 0 n/t   0   0
 0   0 -(f+n)/(f-n) -2fn/(f-n)
 0   0  -1   0
 A'A = I
-A' = 
+A' =
 r/n 0   ?
 0 t/n   ?
-0   0   ?   
+0   0   ?
 0   0   ?   ?
 '''
 

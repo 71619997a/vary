@@ -4,13 +4,14 @@ import transform
 from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
 from base import Image, makeAnimation, clearAnim
 from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects, autoTrianglesFromVT
+import render
 import shape
 from sys import argv
 import time
 
 EDGE = 2
 POLY = 3
-draw = drawObjectsNicely
+draw = lambda a,b: drawObjectsNicely(a,b, shader=render.normMapShader)
 
 def err(s):
     print 'ERROR\n'+s
@@ -20,7 +21,7 @@ def warn(s):
     print 'Warning\n'+s
 
 
-    
+
 def runFrame(frame, commands):
     cstack = [TransMatrix()]
     img = Image(500, 500)
@@ -85,7 +86,7 @@ def runFrame(frame, commands):
             #objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'torus':
-            vxs = cstack[-1] * shape.genTorusPoints(command[1:6]+(.05,.05))
+            vxs = cstack[-1] * shape.genTorusPoints(*command[1:6]+(.05,.05))
             tris = shape.genTorusTris(.05,.05)
             objects.append((POLY, autoTrianglesFromVT(vxs, tris)))
             #polys = edgemtx()
@@ -174,8 +175,8 @@ def run(filename):
         makeAnimation(basename)
         print 'Animation created in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         # clearAnim()
-        
-        
+
+
     else:
         cstack = [TransMatrix()]
         frc = 0
@@ -254,7 +255,7 @@ def run(filename):
                 cstack.append(cstack[-1].clone())
             elif inp == 'pop':
                 cstack.pop()
-    
+
     stack = [ [x[:] for x in tmp] ]
     img = Image(500, 500)
     tmp = []
