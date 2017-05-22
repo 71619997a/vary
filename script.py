@@ -3,7 +3,7 @@ from transform import TransMatrix
 import transform
 from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
 from base import Image, makeAnimation, clearAnim
-from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects, autoTrianglesFromVT
+from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects, autoTrianglesFromVT, flatTrisFromVT
 import render
 import shape
 from sys import argv
@@ -11,8 +11,7 @@ import time
 
 EDGE = 2
 POLY = 3
-draw = lambda a,b: drawObjectsNicely(a,b, shader=render.normMapShader)
-
+draw = lambda *t: drawObjectsNicely(*t, shader=phongShader)
 def err(s):
     print 'ERROR\n'+s
     exit(1)
@@ -23,6 +22,7 @@ def warn(s):
 
 
 def runFrame(frame, commands):
+    step = 0.02
     cstack = [TransMatrix()]
     img = Image(500, 500)
     objects = []
@@ -69,16 +69,17 @@ def runFrame(frame, commands):
         elif inp == 'box':
             vxs = cstack[-1] * shape.genBoxPoints(*command[1:7])
             tris = shape.genBoxTris()
-            objects.append((POLY, autoTrianglesFromVT(vxs, tris)))
+            shape.fixOverlaps(vxs, tris)
+            objects.append((POLY, flatTrisFromVT(vxs, tris)))
             #polys = edgemtx()
             #shape.addBox(*(polys,) + command[1:7])
             #polys = cstack[-1] * polys
             #objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'sphere':
-            print commands
-            vxs = cstack[-1] * shape.genSpherePoints(*command[1:5]+(.05,))
-            tris = shape.genSphereTris(.05)
+            vxs = cstack[-1] * shape.genSpherePoints(*command[1:5]+(step,))
+            tris = shape.genSphereTris(step)
+            shape.fixOverlaps(vxs, tris)
             objects.append((POLY, autoTrianglesFromVT(vxs, tris)))
             #polys = edgemtx()
             #shape.addSphere(*(polys,) + command[1:5] + (.05,))
@@ -86,8 +87,9 @@ def runFrame(frame, commands):
             #objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'torus':
-            vxs = cstack[-1] * shape.genTorusPoints(*command[1:6]+(.05,.05))
-            tris = shape.genTorusTris(.05,.05)
+            vxs = cstack[-1] * shape.genTorusPoints(*command[1:6]+(step,step))
+            tris = shape.genTorusTris(step,step)
+            shape.fixOverlaps(vxs, tris)
             objects.append((POLY, autoTrianglesFromVT(vxs, tris)))
             #polys = edgemtx()
             #shape.addTorus(*(polys,) + command[1:6] + (.05, .05))
@@ -161,18 +163,17 @@ def run(filename):
         for frame in frameList:
             objects = runFrame(frame, commands)
             img = Image(500, 500)
-            print objects[0][1]
             draw(objects, img)
             imgs.append(img)
         print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         print 'Saving images...'
         a = time.time()
         for i in range(len(imgs)):
-            imgs[i].saveAs('anim/%s%03d.png' % (basename, i))
+            imgs[i].savePpm('anim/%s%03d.ppm' % (basename, i))
         print 'Images saved in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         print 'Creating animation... (converting to gif)'
         a = time.time()
-        makeAnimation(basename)
+        makeAnimation(basename, 'ppm')
         print 'Animation created in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         # clearAnim()
 

@@ -205,8 +205,26 @@ def trianglesFromVTN(vxs, tris, norms):
             Point(*vxs[a]+norms[a]+(0,0)),
             Point(*vxs[b]+norms[b]+(0,0)),
             Point(*vxs[c]+norms[c]+(0,0)))
+
+def flatTrisFromVT(vxs, tris):  # for surface norms
+    for a,b,c in tris:
+        v1 = vxs[a]
+        v2 = vxs[b]
+        v3 = vxs[c]
+        v12x, v12y, v12z = tuple(v2[i] - v1[i] for i in range(3))
+        v23x, v23y, v23z = tuple(v3[i] - v2[i] for i in range(3))
+        v31x, v31y, v31z = tuple(v1[i] - v3[i] for i in range(3))
+        try:
+            n = normalizedTuple(cross(v31x, v31y, v31z, -v12x, -v12y, -v12z))
+        except ZeroDivisionError:
+            continue
+        yield (
+            Point(*v1 + n + (0,0)), 
+            Point(*v2 + n + (0,0)),
+            Point(*v3 + n + (0,0)))
+
         
-def autoTrianglesFromVT(vxs, tris):
+def autoTrianglesFromVT(vxs, tris):  # for vertex norms
     return trianglesFromVTN(vxs, tris, genVertexNorms(vxs, tris))
             
 dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (150, 150, 150)), 10)

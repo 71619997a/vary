@@ -28,8 +28,30 @@ def addBox(m, x, y, z, w, h, d):
 
 def addSphere(m, x, y, z, r, step=0.02):
     pts = genSpherePoints(x, y, z, r, step)
-    for a,b,c in genSphereTris(step):
+    tris = genSphereTris(step)
+    fixOverlaps(pts, tris)
+    for a,b,c in tris:
         addTriangle(m, *pts[a]+pts[b]+pts[c])
+
+def fixOverlaps(pts, tris, thresh=15):
+    fac = 2 ** thresh
+    origs = {}
+    reals = {}
+    for i in range(len(pts)):
+        pt = pts[i]
+        x = int(pt[0] * fac)
+        y = int(pt[1] * fac)
+        z = int(pt[2] * fac)
+        if (x, y, z) in origs:
+            reals[i] = origs[(x, y, z)]
+            # print 'OVERLAP -----'
+            # print 'Original point: #%d at ' % (reals[i]) + str(pts[reals[i]])
+            # print 'This point: #%d at ' % (i) + str(pts[i])
+        else:
+            origs[(x, y, z)] = i
+            reals[i] = i
+    for i in range(len(tris)):
+        tris[i] = tuple(reals[j] for j in tris[i])
 
 def genSphereTris(step=0.02):
     tris = []
@@ -45,6 +67,9 @@ def genSphereTris(step=0.02):
             tris.append((cor, diagcor, leftcor))
             tris.append((cor, topcor, diagcor))
     return tris
+
+def checkOrient(p1, p2, p3):
+    pass
 
 def genSpherePoints(x, y, z, r, step=0.02):
     pts = []
@@ -77,11 +102,11 @@ def genTorusTris(mainStep=0.02, ringStep=0.05):
             cNext = (c + 1) % steps
             rNext = (r + 1) % rsteps
             cor = c * rsteps + r
-            leftcor = c * rsteps + rNext
+            rightcor = c * rsteps + rNext
             topcor = cNext * rsteps + r
             diagcor = cNext * rsteps + rNext
-            tris.append((cor, diagcor, leftcor))
-            tris.append((cor, topcor, diagcor))
+            tris.append((cor, rightcor, diagcor))
+            tris.append((cor, diagcor, topcor))
     return tris
 
             
@@ -102,22 +127,6 @@ def genTorusPoints(x, y, z, r, R, mainStep=0.02, ringStep=0.05):
 
         
 if __name__ == '__main__':
-    from base import Image
-    import transform
-    cube = edgemtx()
-    addBoxPoints(cube, 125, 125, -125, 250, 250, 250)
-    m = edgemtx()
-    xTrans = transform.T(250, 250, 0) * transform.R('x', 18) * transform.T(-250, -250, 0)
-    yTrans = transform.T(250, 250, 0) * transform.R('y', 18) * transform.T(-250, -250, 0)
-    for d in 'xyz':
-        trans = transform.T(250, 250, 0) * transform.R(d, 15) * transform.T(-250, -250, 0)
-        for i in range(24):
-            addToEdgeMtx(m, cube)
-            cube = trans * cube
-        cube = m
-        m = edgemtx()
-    cube = transform.T(250, 250, 0) * transform.R('y', 49) * transform.R('x', 67) * transform.R('z', 23) * transform.T(-250, -250, 0) * cube
-    img = Image(500, 500)
-    drawEdges(cube, img)
-    img.display()
-    img.saveAs('badsphere.png')
+    tris = genSphereTris(0.02)
+    pts = genSpherePoints(0,0,0,100,0.02)
+    fixOverlaps(pts, tris, 15)
